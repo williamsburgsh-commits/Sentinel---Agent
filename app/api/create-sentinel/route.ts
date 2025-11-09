@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
   try {
     // Parse request body
     const body = await request.json();
-    const { threshold, condition, discordWebhook } = body;
+    const { threshold, condition, discordWebhook, paymentMethod = 'usdc', userId } = body;
 
     // Validate input
     if (typeof threshold !== 'number' || threshold <= 0) {
@@ -32,6 +32,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (paymentMethod !== 'usdc' && paymentMethod !== 'cash') {
+      return NextResponse.json(
+        { success: false, error: 'Invalid payment method. Must be "usdc" or "cash".' },
+        { status: 400 }
+      );
+    }
+
     // Generate new Solana wallet
     const { keypair, publicKey } = createSentinelWallet();
     const privateKey = bs58.encode(keypair.secretKey);
@@ -39,11 +46,13 @@ export async function POST(request: NextRequest) {
     // Create Sentinel configuration
     const sentinelConfig: SentinelConfig = {
       id: randomUUID(),
+      userId,
       walletAddress: publicKey,
       privateKey: privateKey,
       threshold,
       condition,
       discordWebhook,
+      paymentMethod, // Include payment method (defaults to 'usdc')
       isActive: true,
       createdAt: new Date(),
     };

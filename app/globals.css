@@ -76,3 +76,50 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Toast animations */
+@keyframes animate-enter {
+  0% {
+    opacity: 0;
+    transform: translateX(100%) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes animate-leave {
+  0% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100%) scale(0.9);
+  }
+}
+
+.animate-enter {
+  animation: animate-enter 0.3s ease-out;
+}
+
+.animate-leave {
+  animation: animate-leave 0.2s ease-in forwards;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .animate-enter,
+  .animate-leave {
+    animation: none;
+  }
+}

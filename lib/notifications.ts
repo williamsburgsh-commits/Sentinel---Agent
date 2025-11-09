@@ -5,19 +5,21 @@
  * @param currentPrice - Current SOL price
  * @param threshold - Price threshold that was crossed
  * @param timestamp - When the alert was triggered
+ * @param customMessage - Optional custom message to add to the alert
  */
 export async function sendDiscordAlert(
   webhookUrl: string,
   title: string,
   currentPrice: number,
   threshold: number,
-  timestamp: Date
+  timestamp: Date,
+  customMessage?: string
 ): Promise<void> {
   const embed = {
     embeds: [
       {
         title: `🚨 ${title}`,
-        description: 'A price threshold has been crossed!',
+        description: customMessage || 'A price threshold has been crossed!',
         color: 0xff0000, // Red color
         fields: [
           {

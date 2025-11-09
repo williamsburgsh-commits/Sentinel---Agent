@@ -1,11 +1,18 @@
-import { Connection, PublicKey, Keypair, clusterApiUrl } from '@solana/web3.js';
+import { Connection, Keypair, PublicKey } from '@solana/web3.js';
 import bs58 from 'bs58';
+import { getCurrentNetwork } from './networks';
 
-// Create Solana connection with confirmed commitment level
-export const connection = new Connection(
-  process.env.NEXT_PUBLIC_SOLANA_RPC || clusterApiUrl('devnet'),
-  'confirmed'
-);
+/**
+ * Get Solana connection based on current network configuration
+ * Uses network-specific RPC endpoint from networks.ts
+ */
+export function getSolanaConnection(): Connection {
+  const network = getCurrentNetwork();
+  return new Connection(network.rpcUrl, 'confirmed');
+}
+
+// Legacy connection export (deprecated - use getSolanaConnection() instead)
+export const connection = getSolanaConnection();
 
 /**
  * Get the SOL balance for a given public key

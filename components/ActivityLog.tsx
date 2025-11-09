@@ -1,0 +1,407 @@
+'use client';
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { SentinelActivity } from '@/types';
+
+interface ActivityLogProps {
+  activities: SentinelActivity[];
+}
+
+export default function ActivityLog({ activities }: ActivityLogProps) {
+  // Sort activities by timestamp, most recent first
+  const sortedActivities = [...activities].sort(
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  );
+
+  const formatTimestamp = (date: Date) => {
+    return new Date(date).toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(price);
+  };
+
+  const formatCost = (cost: number, paymentMethod?: 'usdc' | 'cash') => {
+    const token = paymentMethod === 'cash' ? 'CASH' : 'USDC';
+    return `${cost.toFixed(6)} ${token}`;
+  };
+
+  const formatSignature = (signature: string) => {
+    if (signature.length <= 16) return signature;
+    return `${signature.slice(0, 8)}...${signature.slice(-8)}`;
+  };
+
+  const getSolscanUrl = (signature: string) => {
+    return `https://solscan.io/tx/${signature}?cluster=devnet`;
+  };
+
+  const formatSettlementTime = (ms: number) => {
+    if (ms < 1000) {
+      return `${ms}ms`;
+    }
+    return `${(ms / 1000).toFixed(1)}s`;
+  };
+
+  const isInstantSettlement = (ms: number) => {
+    return ms < 1000; // Under 1 second is considered instant
+  };
+
+  return (
+    <Card className="bg-gray-800 border-gray-700">
+      <CardHeader>
+        <CardTitle className="text-white">Activity Log</CardTitle>
+        <CardDescription className="text-gray-400">
+          Price checks and alert history
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {sortedActivities.length === 0 ? (
+          <div className="text-center py-8">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="mx-auto text-gray-600 mb-3"
+            >
+              <path d="M3 3v18h18" />
+              <path d="m19 9-5 5-4-4-3 3" />
+            </svg>
+            <p className="text-gray-500 text-sm">No activity yet</p>
+            <p className="text-gray-600 text-xs mt-1">
+              Activity will appear here once your sentinel starts monitoring
+            </p>
+          </div>
+        ) : (
+          <div className="max-h-96 overflow-y-auto space-y-3 pr-2">
+            {sortedActivities.map((activity, index) => (
+              <div
+                key={index}
+                className={`p-4 rounded-lg border transition-colors ${
+                  activity.triggered
+                    ? 'bg-red-900/20 border-red-700/50 hover:bg-red-900/30'
+                    : 'bg-gray-700/50 border-gray-600 hover:bg-gray-700/70'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 space-y-2">
+                    {/* Timestamp */}
+                    <div className="flex items-center gap-2">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="text-gray-400"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12 6 12 12 16 14" />
+                      </svg>
+                      <span className="text-gray-300 text-sm">
+                        {formatTimestamp(activity.timestamp)}
+                      </span>
+                    </div>
+
+                    {/* Price and Cost */}
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="text-gray-400"
+                        >
+                          <line x1="12" x2="12" y1="2" y2="22" />
+                          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                        </svg>
+                        <span className="text-white font-semibold">
+                          {formatPrice(activity.price)}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="text-gray-400"
+                        >
+                          <circle cx="8" cy="8" r="6" />
+                          <path d="M18.09 10.37A6 6 0 1 1 10.34 18" />
+                          <path d="M7 6h1v4" />
+                          <path d="m16.71 13.88.7.71-2.82 2.82" />
+                        </svg>
+                        <span className="text-gray-400 text-sm">
+                          {formatCost(activity.cost, activity.paymentMethod)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Payment Method and Settlement Time */}
+                    {(activity.paymentMethod || activity.settlementTimeMs) && (
+                      <div className="flex items-center gap-3 flex-wrap">
+                        {/* Payment Method Badge */}
+                        {activity.paymentMethod && (
+                          <div className="flex items-center gap-2">
+                            {activity.paymentMethod === 'cash' ? (
+                              <div className="group relative">
+                                <Badge className="bg-blue-600 hover:bg-blue-700 text-white border-blue-500">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="10"
+                                    height="10"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="mr-1"
+                                  >
+                                    <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                                  </svg>
+                                  CASH
+                                </Badge>
+                                <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-48 p-2 bg-gray-900 border border-gray-600 rounded-md shadow-lg z-10">
+                                  <p className="text-xs text-gray-300">
+                                    <strong className="text-blue-400">Phantom CASH:</strong> Instant settlement, typically under 1 second
+                                  </p>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="group relative">
+                                <Badge className="bg-purple-600 hover:bg-purple-700 text-white border-purple-500">
+                                  USDC
+                                </Badge>
+                                <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-48 p-2 bg-gray-900 border border-gray-600 rounded-md shadow-lg z-10">
+                                  <p className="text-xs text-gray-300">
+                                    <strong className="text-purple-400">USDC:</strong> Standard settlement, typically 30+ seconds
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Settlement Time */}
+                        {activity.settlementTimeMs !== undefined && (
+                          <div className="flex items-center gap-1.5">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className={isInstantSettlement(activity.settlementTimeMs) ? 'text-green-400' : 'text-gray-400'}
+                            >
+                              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                            </svg>
+                            <span
+                              className={`text-xs font-medium ${
+                                isInstantSettlement(activity.settlementTimeMs)
+                                  ? 'text-green-400'
+                                  : 'text-gray-400'
+                              }`}
+                            >
+                              {formatSettlementTime(activity.settlementTimeMs)}
+                            </span>
+                            {isInstantSettlement(activity.settlementTimeMs) && (
+                              <span className="text-xs text-green-400">⚡</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Transaction Signature */}
+                    {activity.transactionSignature && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="text-gray-400 flex-shrink-0"
+                        >
+                          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                        </svg>
+                        <a
+                          href={getSolscanUrl(activity.transactionSignature)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-400 hover:text-blue-300 hover:underline text-sm font-mono inline-flex items-center gap-1 transition-colors"
+                        >
+                          {formatSignature(activity.transactionSignature)}
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="flex-shrink-0"
+                          >
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                            <polyline points="15 3 21 3 21 9" />
+                            <line x1="10" x2="21" y1="14" y2="3" />
+                          </svg>
+                        </a>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Status Badge */}
+                  <div>
+                    {activity.status === 'failed' ? (
+                      <Badge
+                        variant="destructive"
+                        className="bg-orange-600 hover:bg-orange-700 text-white"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="mr-1"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="15" x2="9" y1="9" y2="15" />
+                          <line x1="9" x2="15" y1="9" y2="15" />
+                        </svg>
+                        Failed
+                      </Badge>
+                    ) : activity.triggered ? (
+                      <Badge
+                        variant="destructive"
+                        className="bg-red-600 hover:bg-red-700 text-white"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="mr-1"
+                        >
+                          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                          <line x1="12" x2="12" y1="9" y2="13" />
+                          <line x1="12" x2="12.01" y1="17" y2="17" />
+                        </svg>
+                        Alert Triggered
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="secondary"
+                        className="bg-gray-600 hover:bg-gray-500 text-gray-200"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="mr-1"
+                        >
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        Checked
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                {/* Error Message for Failed Status */}
+                {activity.status === 'failed' && activity.errorMessage && (
+                  <div className="mt-3 p-3 bg-orange-900/30 border border-orange-700/50 rounded-md">
+                    <div className="flex items-start gap-2">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="text-orange-400 flex-shrink-0 mt-0.5"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" x2="12" y1="8" y2="12" />
+                        <line x1="12" x2="12.01" y1="16" y2="16" />
+                      </svg>
+                      <div className="flex-1">
+                        <p className="text-orange-300 text-sm font-semibold mb-1">Error</p>
+                        <p className="text-orange-200 text-xs">{activity.errorMessage}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
