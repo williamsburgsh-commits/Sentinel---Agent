@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Chrome, ArrowRight } from 'lucide-react';
@@ -15,7 +15,6 @@ import { Label } from '@/components/ui/label';
 import { colors } from '@/lib/design-tokens';
 
 export default function LoginPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const redirectedFrom = searchParams?.get('redirectedFrom') || null;
   
@@ -48,8 +47,7 @@ export default function LoginPage() {
       showSuccessToast('Welcome back!', 'Successfully signed in');
       
       // Redirect to dashboard or original destination
-      router.push(redirectedFrom || '/dashboard');
-      router.refresh();
+      window.location.href = redirectedFrom || '/dashboard';
     } catch (error) {
       console.error('Login error:', error);
       showErrorToast(
