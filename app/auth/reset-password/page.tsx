@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Mail, ArrowRight, ArrowLeft } from 'lucide-react';
@@ -11,7 +10,6 @@ import AnimatedInput from '@/components/AnimatedInput';
 import { PixelButton } from '@/components/ui/pixel-hover-effect';
 
 export default function ResetPasswordPage() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
@@ -31,9 +29,9 @@ export default function ResetPasswordPage() {
 
       setEmailSent(true);
       showSuccessToast('Password reset email sent! Check your inbox.');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error sending reset email:', error);
-      showErrorToast(error.message || 'Failed to send reset email');
+      showErrorToast((error as Error).message || 'Failed to send reset email');
     } finally {
       setIsLoading(false);
     }
@@ -92,10 +90,10 @@ export default function ResetPasswordPage() {
                 <Mail className="w-8 h-8 text-green-400" />
               </div>
               <p className="text-gray-300">
-                We've sent a password reset link to <strong className="text-white">{email}</strong>
+                We&apos;ve sent a password reset link to <strong className="text-white">{email}</strong>
               </p>
               <p className="text-sm text-gray-400">
-                Didn't receive the email? Check your spam folder or try again.
+                Didn&apos;t receive the email? Check your spam folder or try again.
               </p>
               <button
                 onClick={() => setEmailSent(false)}

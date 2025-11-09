@@ -46,7 +46,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">5. Limitation of Liability</h2>
             <p>
-              Sentinel Agent is provided "as is" without warranties of any kind. We are not liable 
+              Sentinel Agent is provided &quot;as is&quot; without warranties of any kind. We are not liable 
               for any losses incurred through the use of this service.
             </p>
           </section>
