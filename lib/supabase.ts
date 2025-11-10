@@ -1,4 +1,4 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 
 // Database types
 export type Database = {
@@ -148,27 +148,8 @@ export type Database = {
   };
 };
 
-// Use globalThis to ensure singleton persists across hot reloads in development
-interface GlobalWithSupabase {
-  __supabaseBrowserClient?: SupabaseClient<Database>;
-}
-
-const getSupabaseBrowserClient = (): SupabaseClient<Database> | undefined => {
-  return (globalThis as GlobalWithSupabase).__supabaseBrowserClient;
-};
-
-const setSupabaseBrowserClient = (client: SupabaseClient<Database>) => {
-  (globalThis as GlobalWithSupabase).__supabaseBrowserClient = client;
-};
-
 // Client-side Supabase client (for use in Client Components)
-export const createBrowserClient = (): SupabaseClient<Database> => {
-  // Return existing instance if available
-  const existingClient = getSupabaseBrowserClient();
-  if (existingClient) {
-    return existingClient;
-  }
-
+export const createBrowserClient = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
   
@@ -176,17 +157,13 @@ export const createBrowserClient = (): SupabaseClient<Database> => {
     throw new Error('Missing Supabase environment variables');
   }
   
-  // Create and cache the instance
-  const client = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  return createClient<Database>(supabaseUrl, supabaseAnonKey, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
       storageKey: 'sb-auth-token',
     },
   });
-
-  setSupabaseBrowserClient(client);
-  return client;
 };
 
 // Note: Server-side client should be created in server components/API routes

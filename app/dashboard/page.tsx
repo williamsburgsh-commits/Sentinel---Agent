@@ -43,7 +43,7 @@ import { isMainnet, getNetworkDisplayInfo } from '@/lib/networks';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const supabase = createBrowserClient();
+  const [supabase] = useState(() => createBrowserClient());
 
   // Auth state
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
