@@ -7,16 +7,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  createSentinel as createSentinelDB,
-  getSentinels as getSentinelsDB,
-  updateSentinel as updateSentinelDB,
-  getActivityStats as getActivityStatsDB,
-  fetchUserActivities as fetchUserActivitiesDB,
-  Sentinel,
-  Activity,
-  SentinelConfig,
-} from '@/lib/database';
-import * as MockDB from '@/lib/mock-database';
+  createSentinel,
+  getSentinels,
+  updateSentinel,
+  deleteSentinel,
+  getActivityStats,
+  fetchUserActivities,
+} from '@/lib/data-store';
+import type { Sentinel, Activity, ActivityStats } from '@/types/data';
 import { 
   showSuccessToast, 
   showErrorToast, 
@@ -38,67 +36,9 @@ import GlobalActivityFeed from '@/components/GlobalActivityFeed';
 import AIInsights from '@/components/AIInsights';
 import { colors } from '@/lib/design-tokens';
 import { Keypair } from '@solana/web3.js';
+import bs58 from 'bs58';
 import { Plus, LogOut, Filter, SortDesc, Play, Pause, FileText, Search, X } from 'lucide-react';
 import { isMainnet, getNetworkDisplayInfo } from '@/lib/networks';
-
-// ==================== DATABASE WRAPPER FUNCTIONS ====================
-// These functions try Supabase first, then fall back to localStorage if it fails
-
-async function createSentinel(userId: string, config: SentinelConfig): Promise<Sentinel | null> {
-  try {
-    return await createSentinelDB(userId, config);
-  } catch {
-    console.warn('⚠️  Supabase failed, using localStorage fallback');
-    return await MockDB.createSentinel(userId, config);
-  }
-}
-
-async function getSentinels(userId: string, network?: 'devnet' | 'mainnet'): Promise<Sentinel[]> {
-  try {
-    return await getSentinelsDB(userId, network);
-  } catch {
-    console.warn('⚠️  Supabase failed, using localStorage fallback');
-    return await MockDB.getSentinels(userId, network);
-  }
-}
-
-async function updateSentinel(sentinelId: string, updates: Partial<Sentinel>): Promise<Sentinel | null> {
-  try {
-    return await updateSentinelDB(sentinelId, updates);
-  } catch {
-    console.warn('⚠️  Supabase failed, using localStorage fallback');
-    return await MockDB.updateSentinel(sentinelId, updates);
-  }
-}
-
-async function deleteSentinel(sentinelId: string): Promise<boolean> {
-  try {
-    return await MockDB.deleteSentinel(sentinelId);
-  } catch {
-    console.warn('⚠️  Error deleting sentinel from localStorage');
-    return false;
-  }
-}
-
-async function getActivityStats(userId?: string, sentinelId?: string): Promise<{ total_checks: number; total_spent: number; last_check?: string }> {
-  try {
-    return await getActivityStatsDB(userId, sentinelId);
-  } catch {
-    console.warn('⚠️  Supabase failed, using localStorage fallback');
-    return await MockDB.getActivityStats(userId, sentinelId);
-  }
-}
-
-async function fetchUserActivities(userId: string, limit?: number): Promise<Activity[]> {
-  try {
-    return await fetchUserActivitiesDB(userId, limit);
-  } catch {
-    console.warn('⚠️  Supabase failed, using localStorage fallback');
-    return await MockDB.fetchUserActivities(userId, limit);
-  }
-}
-
-// ==================== END DATABASE WRAPPERS ====================
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -120,7 +60,7 @@ export default function DashboardPage() {
   const [isSentinelsLoading, setIsSentinelsLoading] = useState(true);
 
   // Activities state
-  const [stats, setStats] = useState<Record<string, { total_checks: number; total_spent: number; last_check?: string }>>({});
+  const [stats, setStats] = useState<Record<string, ActivityStats>>({});
   const [globalActivities, setGlobalActivities] = useState<Activity[]>([]);
   const [isActivitiesLoading, setIsActivitiesLoading] = useState(true);
 
@@ -267,7 +207,7 @@ export default function DashboardPage() {
       });
 
       const statsResults = await Promise.all(statsPromises);
-      const statsMap: Record<string, { total_checks: number; total_spent: number; last_check?: string }> = {};
+      const statsMap: Record<string, ActivityStats> = {};
       statsResults.forEach(({ id, stats }) => {
         statsMap[id] = stats;
       });
@@ -308,7 +248,7 @@ export default function DashboardPage() {
     }
   }, [user]);
 
-  const calculateAggregateStats = (sentinels: Sentinel[], statsMap: Record<string, { total_checks: number; total_spent: number; last_check?: string }>) => {
+  const calculateAggregateStats = (sentinels: Sentinel[], statsMap: Record<string, ActivityStats>) => {
     const activeSentinels = sentinels.filter(s => s.is_active).length;
     let totalChecks = 0;
     let totalUSDCSpent = 0;
@@ -398,7 +338,8 @@ export default function DashboardPage() {
       // Generate new wallet
       const keypair = Keypair.generate();
       const walletAddress = keypair.publicKey.toString();
-      const privateKey = Buffer.from(keypair.secretKey).toString('base64');
+      // Store private key as base58 (compatible with runSentinelCheck)
+      const privateKey = bs58.encode(keypair.secretKey);
 
       console.log('🔑 Generated Wallet:', walletAddress);
 

@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Brain, X, TrendingUp, TrendingDown, Minus, Clock, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { getAIAnalysisHistory, AIAnalysisRow } from '@/lib/database';
+import { getAIAnalysisHistory } from '@/lib/data-store';
+import type { AIAnalysisRow } from '@/types/data';
 import { colors } from '@/lib/design-tokens';
 import { Card, CardContent } from '@/components/ui/card';
 

@@ -16,7 +16,7 @@ import {
   Trash2,
   AlertCircle
 } from 'lucide-react';
-import { Sentinel } from '@/lib/database';
+import type { Sentinel } from '@/types/data';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { PixelButton } from '@/components/ui/pixel-hover-effect';
