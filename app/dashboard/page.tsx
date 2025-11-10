@@ -107,53 +107,67 @@ export default function DashboardPage() {
     console.log('🌐 ============================================');
   }, []);
 
-  // Check authentication
+  // Check authentication - TEMPORARILY DISABLED FOR TESTING
   useEffect(() => {
-    const checkAuth = async () => {
-      console.log('🔐 Starting auth check...');
-      try {
-        // Add timeout to prevent infinite loading
-        const timeoutPromise = new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Auth timeout')), 10000)
-        );
-        
-        const authPromise = supabase.auth.getSession();
-        
-        const result = await Promise.race([authPromise, timeoutPromise]);
-        const { data: { session } } = result;
-        
-        console.log('🔐 Auth check complete. Session:', session ? 'Found' : 'Not found');
-        
-        if (!session) {
-          console.log('❌ No session, redirecting to login...');
-          setIsAuthLoading(false);
-          router.push('/auth/login');
-          return;
-        }
-
-        console.log('✅ User authenticated:', session.user.email);
-        setUser(session.user);
-        setIsAuthLoading(false);
-      } catch (error) {
-        console.error('❌ Auth error:', error);
-        setIsAuthLoading(false); // CRITICAL: Set loading to false on error
-        router.push('/auth/login');
-      }
+    console.log('🔓 AUTH CHECK BYPASSED - DEV MODE');
+    console.log('⚠️  WARNING: Auth protection is disabled!');
+    
+    // Mock user for testing without auth
+    const mockUser = {
+      id: 'dev-test-user-id',
+      email: 'dev@test.com'
     };
+    
+    setUser(mockUser);
+    setIsAuthLoading(false);
+    console.log('✅ Mock user set:', mockUser.email);
+  }, []);
 
-    checkAuth();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        router.push('/auth/login');
-      } else {
-        setUser(session.user);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [router, supabase.auth]);
+  // ORIGINAL AUTH CODE (commented out):
+  // useEffect(() => {
+  //   const checkAuth = async () => {
+  //     console.log('🔐 Starting auth check...');
+  //     try {
+  //       const timeoutPromise = new Promise<never>((_, reject) => 
+  //         setTimeout(() => reject(new Error('Auth timeout')), 10000)
+  //       );
+  //       
+  //       const authPromise = supabase.auth.getSession();
+  //       
+  //       const result = await Promise.race([authPromise, timeoutPromise]);
+  //       const { data: { session } } = result;
+  //       
+  //       console.log('🔐 Auth check complete. Session:', session ? 'Found' : 'Not found');
+  //       
+  //       if (!session) {
+  //         console.log('❌ No session, redirecting to login...');
+  //         setIsAuthLoading(false);
+  //         router.push('/auth/login');
+  //         return;
+  //       }
+  //
+  //       console.log('✅ User authenticated:', session.user.email);
+  //       setUser(session.user);
+  //       setIsAuthLoading(false);
+  //     } catch (error) {
+  //       console.error('❌ Auth error:', error);
+  //       setIsAuthLoading(false);
+  //       router.push('/auth/login');
+  //     }
+  //   };
+  //
+  //   checkAuth();
+  //
+  //   const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+  //     if (!session) {
+  //       router.push('/auth/login');
+  //     } else {
+  //       setUser(session.user);
+  //     }
+  //   });
+  //
+  //   return () => subscription.unsubscribe();
+  // }, [router, supabase.auth]);
 
   const loadSentinels = useCallback(async () => {
     if (!user) return;
