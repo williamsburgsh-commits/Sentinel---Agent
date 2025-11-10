@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { createBrowserClient } from '@/lib/supabase';
 import {
   createSentinel as createSentinelDB,
   getSentinels as getSentinelsDB,
@@ -103,7 +102,6 @@ async function fetchUserActivities(userId: string, limit?: number): Promise<Acti
 
 export default function DashboardPage() {
   const router = useRouter();
-  const supabase = createBrowserClient();
 
   // Auth state
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
@@ -520,7 +518,10 @@ export default function DashboardPage() {
       });
       monitoringIntervalsRef.current.clear();
 
-      await supabase.auth.signOut();
+      // Clear localStorage
+      localStorage.clear();
+      console.log('✅ Cleared local storage and signed out');
+      
       router.push('/');
     } catch (error) {
       console.error('Sign out error:', error);
