@@ -1,119 +1,96 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Mail, ArrowRight, ArrowLeft } from 'lucide-react';
-import { createBrowserClient } from '@/lib/supabase';
-import { showSuccessToast, showErrorToast } from '@/lib/toast';
-import AnimatedInput from '@/components/AnimatedInput';
-import { PixelButton } from '@/components/ui/pixel-hover-effect';
+import { AlertCircle, Home } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function ResetPasswordPage() {
-  const [email, setEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
-
-  const supabase = createBrowserClient();
-
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/update-password`,
-      });
-
-      if (error) throw error;
-
-      setEmailSent(true);
-      showSuccessToast('Password reset email sent! Check your inbox.');
-    } catch (error) {
-      console.error('Error sending reset email:', error);
-      showErrorToast((error as Error).message || 'Failed to send reset email');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 flex items-center justify-center p-4">
+      {/* Background effects */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md"
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-md relative z-10"
       >
-        <div className="bg-gray-800/50 backdrop-blur-xl rounded-2xl border border-purple-500/20 p-8 shadow-2xl">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">Reset Password</h1>
-            <p className="text-gray-400">
-              {emailSent 
-                ? "Check your email for the reset link" 
-                : "Enter your email to receive a password reset link"
-              }
-            </p>
-          </div>
-
-          {!emailSent ? (
-            <form onSubmit={handleResetPassword} className="space-y-6">
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <AnimatedInput
-                  type="email"
-                  placeholder="Email address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="pl-10"
-                />
-              </div>
-
-              <PixelButton
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2"
-              >
-                {isLoading ? (
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <>
-                    Send Reset Link
-                    <ArrowRight className="w-5 h-5" />
-                  </>
-                )}
-              </PixelButton>
-            </form>
-          ) : (
-            <div className="text-center space-y-6">
-              <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto">
-                <Mail className="w-8 h-8 text-green-400" />
-              </div>
-              <p className="text-gray-300">
-                We&apos;ve sent a password reset link to <strong className="text-white">{email}</strong>
-              </p>
-              <p className="text-sm text-gray-400">
-                Didn&apos;t receive the email? Check your spam folder or try again.
-              </p>
-              <button
-                onClick={() => setEmailSent(false)}
-                className="text-purple-400 hover:text-purple-300 transition-colors text-sm"
-              >
-                Try a different email
-              </button>
-            </div>
-          )}
-
-          <div className="mt-6 text-center">
-            <Link
-              href="/auth/login"
-              className="text-purple-400 hover:text-purple-300 transition-colors flex items-center justify-center gap-2 text-sm"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back to Login
-            </Link>
-          </div>
+        {/* Logo/Title */}
+        <div className="text-center mb-8">
+          <motion.h1
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-4xl font-bold text-white mb-2"
+          >
+            Authentication Disabled
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="text-gray-400"
+          >
+            This is a test build running without authentication
+          </motion.p>
         </div>
+
+        <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-xl">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-yellow-500" />
+              Dev Mode Active
+            </CardTitle>
+            <CardDescription className="text-gray-400">
+              Authentication is disabled in this build
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+              <p className="text-yellow-200 text-sm leading-relaxed">
+                This application is running in development mode without Supabase authentication. 
+                All auth-related functionality has been disabled to allow testing without external dependencies.
+              </p>
+            </div>
+
+            <div className="space-y-2 text-sm text-gray-300">
+              <p className="font-semibold text-white">What this means:</p>
+              <ul className="list-disc list-inside space-y-1 text-gray-400">
+                <li>No user accounts or authentication required</li>
+                <li>All data is stored locally in your browser</li>
+                <li>No Supabase configuration needed</li>
+              </ul>
+            </div>
+
+            <Link
+              href="/dashboard"
+              className="flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-all duration-200"
+            >
+              <Home className="w-5 h-5" />
+              Go to Dashboard
+            </Link>
+          </CardContent>
+        </Card>
+
+        {/* Back to Home */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="text-center mt-6"
+        >
+          <Link
+            href="/"
+            className="text-gray-400 hover:text-gray-300 text-sm transition-colors"
+          >
+            ← Back to home
+          </Link>
+        </motion.div>
       </motion.div>
     </div>
   );

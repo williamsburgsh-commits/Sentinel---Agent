@@ -19,8 +19,6 @@
     "@solana/wallet-adapter-react-ui": "^0.9.39",
     "@solana/wallet-adapter-wallets": "^0.19.37",
     "@solana/web3.js": "^1.95.0",
-    "@supabase/auth-helpers-nextjs": "^0.10.0",
-    "@supabase/supabase-js": "^2.80.0",
     "@switchboard-xyz/solana.js": "^3.2.5",
     "bs58": "^6.0.0",
     "class-variance-authority": "^0.7.1",

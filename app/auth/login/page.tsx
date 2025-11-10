@@ -1,83 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Chrome, ArrowRight } from 'lucide-react';
-import { createBrowserClient } from '@/lib/supabase';
-import { showSuccessToast, showErrorToast } from '@/lib/toast';
-import AnimatedInput from '@/components/AnimatedInput';
-import { PixelButton } from '@/components/ui/pixel-hover-effect';
-import { ButtonSpinner } from '@/components/LoadingSpinner';
+import { AlertCircle, Home } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { colors } from '@/lib/design-tokens';
 
 export default function LoginPage() {
-  const searchParams = useSearchParams();
-  const redirectedFrom = searchParams?.get('redirectedFrom') || null;
-  
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-
-  const supabase = createBrowserClient();
-
-  const handleEmailLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      // Validation
-      if (!email || !password) {
-        showErrorToast('Validation Error', 'Please fill in all fields');
-        setIsLoading(false);
-        return;
-      }
-
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      showSuccessToast('Welcome back!', 'Successfully signed in');
-      
-      // Redirect to dashboard or original destination
-      window.location.href = redirectedFrom || '/dashboard';
-    } catch (error) {
-      console.error('Login error:', error);
-      showErrorToast(
-        'Login Failed',
-        error instanceof Error ? error.message : 'Invalid email or password'
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    setIsGoogleLoading(true);
-
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-
-      if (error) throw error;
-    } catch (error) {
-      console.error('Google login error:', error);
-      showErrorToast('Google Login Failed', error instanceof Error ? error.message : 'An error occurred');
-      setIsGoogleLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 flex items-center justify-center p-4">
       {/* Background effects */}
@@ -100,7 +28,7 @@ export default function LoginPage() {
             transition={{ delay: 0.2 }}
             className="text-4xl font-bold text-white mb-2"
           >
-            Welcome Back
+            Authentication Disabled
           </motion.h1>
           <motion.p
             initial={{ opacity: 0 }}
@@ -108,127 +36,44 @@ export default function LoginPage() {
             transition={{ delay: 0.3 }}
             className="text-gray-400"
           >
-            Sign in to your Sentinel account
+            This is a test build running without authentication
           </motion.p>
         </div>
 
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-xl">
           <CardHeader>
-            <CardTitle className="text-white">Sign In</CardTitle>
+            <CardTitle className="text-white flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-yellow-500" />
+              Dev Mode Active
+            </CardTitle>
             <CardDescription className="text-gray-400">
-              Enter your credentials to access your account
+              Authentication is disabled in this build
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleEmailLogin} className="space-y-4">
-              {/* Email Input */}
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-gray-200 flex items-center gap-2">
-                  <Mail className="w-4 h-4" />
-                  Email
-                </Label>
-                <AnimatedInput
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={isLoading}
-                  className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
-                  required
-                />
-              </div>
-
-              {/* Password Input */}
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-gray-200 flex items-center gap-2">
-                  <Lock className="w-4 h-4" />
-                  Password
-                </Label>
-                <AnimatedInput
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={isLoading}
-                  className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
-                  required
-                />
-              </div>
-
-              {/* Forgot Password Link */}
-              <div className="text-right">
-                <Link
-                  href="/auth/reset-password"
-                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-
-              {/* Sign In Button */}
-              <PixelButton
-                type="submit"
-                disabled={isLoading || isGoogleLoading}
-                color={colors.primary[500]}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                {isLoading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <ButtonSpinner />
-                    Signing in...
-                  </span>
-                ) : (
-                  <span className="flex items-center justify-center gap-2">
-                    Sign In
-                    <ArrowRight className="w-4 h-4" />
-                  </span>
-                )}
-              </PixelButton>
-            </form>
-
-            {/* Divider */}
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-700" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-gray-800 text-gray-400">Or continue with</span>
-              </div>
+          <CardContent className="space-y-4">
+            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+              <p className="text-yellow-200 text-sm leading-relaxed">
+                This application is running in development mode without Supabase authentication. 
+                All auth-related functionality has been disabled to allow testing without external dependencies.
+              </p>
             </div>
 
-            {/* Google Sign In */}
-            <PixelButton
-              type="button"
-              onClick={handleGoogleLogin}
-              disabled={isLoading || isGoogleLoading}
-              color="#EA4335"
-              className="w-full bg-white hover:bg-gray-100 text-gray-900"
+            <div className="space-y-2 text-sm text-gray-300">
+              <p className="font-semibold text-white">What this means:</p>
+              <ul className="list-disc list-inside space-y-1 text-gray-400">
+                <li>No user accounts or authentication required</li>
+                <li>All data is stored locally in your browser</li>
+                <li>No Supabase configuration needed</li>
+              </ul>
+            </div>
+
+            <Link
+              href="/dashboard"
+              className="flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-all duration-200"
             >
-              {isGoogleLoading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <ButtonSpinner />
-                  Connecting...
-                </span>
-              ) : (
-                <span className="flex items-center justify-center gap-2">
-                  <Chrome className="w-5 h-5" />
-                  Sign in with Google
-                </span>
-              )}
-            </PixelButton>
-
-            {/* Sign Up Link */}
-            <div className="mt-6 text-center text-sm text-gray-400">
-              Don&apos;t have an account?{' '}
-              <Link
-                href="/auth/signup"
-                className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
-              >
-                Sign up
-              </Link>
-            </div>
+              <Home className="w-5 h-5" />
+              Go to Dashboard
+            </Link>
           </CardContent>
         </Card>
 
