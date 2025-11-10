@@ -5,6 +5,7 @@ import { motion, useInView, useAnimation } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { colors, animations, shadows } from '@/lib/design-tokens';
+import { Brain, Shield, Sparkles, Users, TrendingUp, Image, Vault, Coins } from 'lucide-react';
 
 // Animated counter component
 function AnimatedCounter({ end, duration = 2, suffix = '' }: { end: number; duration?: number; suffix?: string }) {
@@ -206,7 +207,7 @@ export default function Home() {
                     <Button
                       size="lg"
                       variant="outline"
-                      className="text-xl px-12 py-8 font-bold text-white border-2 border-gray-600 hover:border-gray-500 hover:bg-white/10"
+                      className="text-xl px-12 py-8 font-bold text-white border-2 border-white/30 hover:border-white/50 hover:bg-white/10 bg-transparent"
                     >
                       Learn More
                     </Button>
@@ -535,6 +536,219 @@ export default function Home() {
                       Affordable micropayments
                     </div>
                   </motion.div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Roadmap Section */}
+        <section className="py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+          {/* Background decoration */}
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500 rounded-full blur-3xl" />
+            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500 rounded-full blur-3xl" />
+          </div>
+
+          <div className="max-w-7xl mx-auto relative z-10">
+            {/* Section Header */}
+            <motion.div
+              initial="hidden"
+              whileInView="animate"
+              viewport={{ once: true }}
+              variants={animations.fadeIn}
+              className="text-center mb-20"
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 mb-6"
+              >
+                <Sparkles className="w-4 h-4 text-blue-400" />
+                <span className="text-sm font-semibold text-blue-400">What&apos;s Next</span>
+              </motion.div>
+              <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6">
+                The Future of Sentinel
+              </h2>
+              <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+                Building the autonomous agent economy, one Sentinel at a time
+              </p>
+            </motion.div>
+
+            {/* Phase 1: Agent Economy */}
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="mb-16"
+            >
+              <div className="relative">
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-purple-500 rounded-full" />
+                <div className="pl-12">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-500/30 mb-4">
+                    <span className="text-xs font-bold text-blue-400">PHASE 1</span>
+                  </div>
+                  <h3 className="text-3xl font-bold text-white mb-4">The Agent Economy</h3>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <motion.div
+                      whileHover={{ scale: 1.02, y: -4 }}
+                      className="p-6 rounded-2xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-white/10 backdrop-blur-xl"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="p-3 rounded-xl bg-blue-500/20">
+                          <Users className="w-6 h-6 text-blue-400" />
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-semibold text-white mb-2">Agent-to-Agent Marketplace</h4>
+                          <p className="text-gray-400 text-sm">
+                            Your Analyst Sentinel can sell verified AI analyses to other Sentinels - agents paying agents for insights
+                          </p>
+                        </div>
+                      </div>
+                    </motion.div>
+                    <motion.div
+                      whileHover={{ scale: 1.02, y: -4 }}
+                      className="p-6 rounded-2xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-white/10 backdrop-blur-xl"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="p-3 rounded-xl bg-purple-500/20">
+                          <Brain className="w-6 h-6 text-purple-400" />
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-semibold text-white mb-2">Multi-Model AI Consensus</h4>
+                          <p className="text-gray-400 text-sm">
+                            Sentinels pay multiple AI models (Claude, GPT-4) for consensus recommendations - trustless analysis through verification
+                          </p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Phase 2: Specialized Sentinels */}
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="mb-16"
+            >
+              <div className="relative">
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full" />
+                <div className="pl-12">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 border border-purple-500/30 mb-4">
+                    <span className="text-xs font-bold text-purple-400">PHASE 2</span>
+                  </div>
+                  <h3 className="text-3xl font-bold text-white mb-4">Specialized Sentinels</h3>
+                  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {[
+                      {
+                        icon: TrendingUp,
+                        title: 'DeFi Trader',
+                        description: 'Alert on JUP/USDC 5% price movements',
+                        color: 'from-green-500 to-emerald-600',
+                        iconBg: 'bg-green-500/20',
+                        iconColor: 'text-green-400'
+                      },
+                      {
+                        icon: Image,
+                        title: 'NFT Collector',
+                        description: 'Alert on Mad Lads floor price drops below 100 SOL',
+                        color: 'from-pink-500 to-rose-600',
+                        iconBg: 'bg-pink-500/20',
+                        iconColor: 'text-pink-400'
+                      },
+                      {
+                        icon: Vault,
+                        title: 'DAO Treasurer',
+                        description: 'Alert on treasury balance drops below $500K',
+                        color: 'from-blue-500 to-cyan-600',
+                        iconBg: 'bg-blue-500/20',
+                        iconColor: 'text-blue-400'
+                      },
+                      {
+                        icon: Coins,
+                        title: 'Staker',
+                        description: 'Alert on Marinade APY changes over 0.25%',
+                        color: 'from-orange-500 to-amber-600',
+                        iconBg: 'bg-orange-500/20',
+                        iconColor: 'text-orange-400'
+                      }
+                    ].map((sentinel, index) => (
+                      <motion.div
+                        key={sentinel.title}
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.4, delay: index * 0.1 }}
+                        whileHover={{ scale: 1.05, y: -8 }}
+                        className="p-6 rounded-2xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-white/10 backdrop-blur-xl group cursor-pointer"
+                      >
+                        <div className={`p-3 rounded-xl ${sentinel.iconBg} mb-4 inline-block group-hover:scale-110 transition-transform`}>
+                          <sentinel.icon className={`w-6 h-6 ${sentinel.iconColor}`} />
+                        </div>
+                        <h4 className="text-lg font-semibold text-white mb-2">{sentinel.title}</h4>
+                        <p className="text-gray-400 text-sm">{sentinel.description}</p>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Phase 3: Intelligence & Identity */}
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+            >
+              <div className="relative">
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-pink-500 to-red-500 rounded-full" />
+                <div className="pl-12">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/20 border border-pink-500/30 mb-4">
+                    <span className="text-xs font-bold text-pink-400">PHASE 3</span>
+                  </div>
+                  <h3 className="text-3xl font-bold text-white mb-4">Intelligence & Identity</h3>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <motion.div
+                      whileHover={{ scale: 1.02, y: -4 }}
+                      className="p-6 rounded-2xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-white/10 backdrop-blur-xl"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="p-3 rounded-xl bg-pink-500/20">
+                          <Sparkles className="w-6 h-6 text-pink-400" />
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-semibold text-white mb-2">Sentinel Personality & Memory</h4>
+                          <p className="text-gray-400 text-sm">
+                            Agents get smarter over time with personalized AI that remembers past analyses
+                          </p>
+                        </div>
+                      </div>
+                    </motion.div>
+                    <motion.div
+                      whileHover={{ scale: 1.02, y: -4 }}
+                      className="p-6 rounded-2xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-white/10 backdrop-blur-xl"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="p-3 rounded-xl bg-red-500/20">
+                          <Shield className="w-6 h-6 text-red-400" />
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-semibold text-white mb-2">On-Chain Performance & Reputation</h4>
+                          <p className="text-gray-400 text-sm">
+                            Verifiable, immutable track record of each Sentinel&apos;s recommendations
+                          </p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </div>
                 </div>
               </div>
             </motion.div>

@@ -17,14 +17,11 @@ import {
   Copy,
   Check,
   RefreshCw,
-  Zap,
-  AlertTriangle
+  Zap
 } from 'lucide-react';
 import type { Sentinel } from '@/types/data';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { PixelButton } from '@/components/ui/pixel-hover-effect';
-import { colors } from '@/lib/design-tokens';
 import { formatDistanceToNow } from 'date-fns';
 import StatusBadge from './StatusBadge';
 import FundingInstructions from './FundingInstructions';
@@ -57,13 +54,11 @@ export default function SentinelCardNew({
   const [isCheckingBalance, setIsCheckingBalance] = useState(false);
   const [showFundingInstructions, setShowFundingInstructions] = useState(sentinel.status === 'unfunded');
 
-  // Check balance on mount for unfunded sentinels
+  // Check balance on mount for all sentinels
   useEffect(() => {
-    if (sentinel.status === 'unfunded' || sentinel.status === 'ready') {
-      handleCheckBalance();
-    }
+    handleCheckBalance();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sentinel.id, sentinel.status]);
+  }, [sentinel.id]);
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -198,216 +193,212 @@ export default function SentinelCardNew({
   const estimatedChecks = calculateEstimatedChecks(balances.sol, balances.token);
   const tokenName = sentinel.payment_method.toUpperCase();
 
-  // Get card accent color based on status
-  const getCardAccent = () => {
+  // Get status-based styling
+  const getStatusColor = () => {
     switch (sentinel.status) {
       case 'unfunded':
-        return 'border-orange-500/30 bg-orange-900/5';
+        return { 
+          bg: 'from-orange-500/20 to-red-500/20', 
+          border: 'border-orange-500/30', 
+          glow: 'shadow-orange-500/20',
+          icon: 'bg-orange-500/20 text-orange-400'
+        };
       case 'ready':
-        return 'border-blue-500/30 bg-blue-900/5';
+        return { 
+          bg: 'from-blue-500/20 to-cyan-500/20', 
+          border: 'border-blue-500/30', 
+          glow: 'shadow-blue-500/20',
+          icon: 'bg-blue-500/20 text-blue-400'
+        };
       case 'monitoring':
-        return 'border-green-500/30 bg-green-900/5';
+        return { 
+          bg: 'from-green-500/20 to-emerald-500/20', 
+          border: 'border-green-500/30', 
+          glow: 'shadow-green-500/20',
+          icon: 'bg-green-500/20 text-green-400'
+        };
       case 'paused':
-        return 'border-gray-500/30 bg-gray-900/5';
+        return { 
+          bg: 'from-gray-500/20 to-slate-500/20', 
+          border: 'border-gray-500/30', 
+          glow: 'shadow-gray-500/20',
+          icon: 'bg-gray-500/20 text-gray-400'
+        };
     }
   };
 
+  const statusColor = getStatusColor();
+
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      whileHover={{ y: -4 }}
-      transition={{ duration: 0.2 }}
+      whileHover={{ y: -8, transition: { duration: 0.2 } }}
+      className="group"
     >
-      <Card className={`bg-gray-800/50 backdrop-blur-xl hover:border-gray-600 transition-all ${getCardAccent()}`}>
-        <CardHeader className="pb-3">
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-blue-500/10">
-                <Activity className="w-5 h-5 text-blue-400" />
+      {/* Glassmorphism Card */}
+      <div className={`relative overflow-hidden rounded-2xl backdrop-blur-xl bg-gradient-to-br ${statusColor.bg} border ${statusColor.border} ${statusColor.glow} shadow-2xl transition-all duration-300`}>
+        {/* Animated gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        
+        {/* Monitoring pulse indicator */}
+        {sentinel.status === 'monitoring' && (
+          <div className="absolute top-4 right-4 z-10">
+            <div className="relative">
+              <div className="absolute inset-0 bg-green-500 blur-xl opacity-50 animate-pulse" />
+              <div className="relative w-3 h-3 rounded-full bg-green-500 animate-pulse" />
+            </div>
+          </div>
+        )}
+        
+        <div className="relative p-6 space-y-6">
+          {/* Header */}
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className={`absolute inset-0 ${statusColor.bg} blur-xl opacity-50`} />
+                <div className={`relative p-3 rounded-xl ${statusColor.icon} backdrop-blur-sm border border-white/10`}>
+                  <Zap className="w-6 h-6" />
+                </div>
               </div>
               <div>
-                <h3 className="font-semibold text-white">Sentinel</h3>
+                <h3 className="text-lg font-bold text-white">Sentinel Agent</h3>
                 <p className="text-xs text-gray-400">
-                  Created {formatDistanceToNow(new Date(sentinel.created_at), { addSuffix: true })}
+                  {formatDistanceToNow(new Date(sentinel.created_at), { addSuffix: true })}
                 </p>
               </div>
             </div>
+            <StatusBadge status={sentinel.status} size="md" />
           </div>
-          
-          {/* Status Badge - Large and Prominent */}
-          <div className="flex justify-center mb-4">
-            <StatusBadge status={sentinel.status} size="lg" />
-          </div>
-        </CardHeader>
-
-        <CardContent className="space-y-4">
           {/* Wallet Address */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Wallet className="w-4 h-4 text-blue-400" />
-                <span className="text-xs text-gray-400 font-semibold">Wallet Address</span>
-              </div>
+            <div className="flex items-center gap-2 text-xs text-gray-400">
+              <Wallet className="w-4 h-4" />
+              <span>Wallet Address</span>
+            </div>
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-black/30 border border-white/5">
+              <code className="flex-1 text-sm text-white font-mono truncate">
+                {sentinel.wallet_address}
+              </code>
               <button
                 onClick={() => copyToClipboard(sentinel.wallet_address)}
-                className="flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 transition-colors"
+                className="p-2 rounded-lg hover:bg-white/10 transition-colors"
               >
                 {copied ? (
-                  <>
-                    <Check className="w-3 h-3 text-green-400" />
-                    <span className="text-xs text-green-400">Copied!</span>
-                  </>
+                  <Check className="w-4 h-4 text-green-400" />
                 ) : (
-                  <>
-                    <Copy className="w-3 h-3 text-blue-400" />
-                    <span className="text-xs text-blue-400">Copy</span>
-                  </>
+                  <Copy className="w-4 h-4 text-gray-400" />
                 )}
               </button>
             </div>
-            <div className="p-3 rounded-lg bg-gray-900/50 border border-gray-700">
-              <p className="text-xs text-gray-300 font-mono break-all">
-                {sentinel.wallet_address}
-              </p>
-            </div>
           </div>
 
-          {/* Current Balances */}
+          {/* Balances Grid */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="p-3 rounded-lg bg-gray-900/50 border border-gray-700">
-              <div className="flex items-center gap-2 mb-1">
-                <Zap className="w-4 h-4 text-yellow-400" />
-                <p className="text-xs text-gray-400">SOL Balance</p>
+            <div className="p-4 rounded-xl bg-black/30 border border-white/5">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-1.5 rounded-lg bg-yellow-500/20">
+                  <DollarSign className="w-4 h-4 text-yellow-400" />
+                </div>
+                <span className="text-xs text-gray-400">SOL Balance</span>
               </div>
-              <p className="text-lg font-bold text-white">{balances.sol.toFixed(4)}</p>
+              <p className="text-2xl font-bold text-white">{balances.sol.toFixed(4)}</p>
             </div>
 
-            <div className="p-3 rounded-lg bg-gray-900/50 border border-gray-700">
-              <div className="flex items-center gap-2 mb-1">
-                <DollarSign className="w-4 h-4 text-green-400" />
-                <p className="text-xs text-gray-400">{tokenName} Balance</p>
+            <div className="p-4 rounded-xl bg-black/30 border border-white/5">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-1.5 rounded-lg bg-blue-500/20">
+                  <DollarSign className="w-4 h-4 text-blue-400" />
+                </div>
+                <span className="text-xs text-gray-400">{tokenName}</span>
               </div>
-              <p className="text-lg font-bold text-white">{balances.token.toFixed(4)}</p>
+              <p className="text-2xl font-bold text-white">{balances.token.toFixed(4)}</p>
             </div>
           </div>
 
-          {/* Estimated Checks (for ready/monitoring/paused) */}
-          {sentinel.status !== 'unfunded' && estimatedChecks > 0 && (
-            <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/30">
-              <p className="text-xs text-blue-300 text-center">
-                ~{estimatedChecks} checks remaining
-              </p>
+          {/* Price Alert Info */}
+          <div className="p-4 rounded-xl bg-black/30 border border-white/5">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-gray-400">Price Alert</span>
+              <Badge variant="outline" className="text-xs">
+                {sentinel.payment_method.toUpperCase()}
+              </Badge>
             </div>
-          )}
-
-          {/* Threshold & Condition */}
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-900/50 border border-gray-700">
-            {sentinel.condition === 'above' ? (
-              <TrendingUp className="w-5 h-5 text-green-400" />
-            ) : (
-              <TrendingDown className="w-5 h-5 text-red-400" />
-            )}
-            <div className="flex-1">
-              <p className="text-xs text-gray-400">Price Alert</p>
-              <p className="text-sm font-semibold text-white">
+            <div className="flex items-center gap-2">
+              {sentinel.condition === 'above' ? (
+                <TrendingUp className="w-5 h-5 text-green-400" />
+              ) : (
+                <TrendingDown className="w-5 h-5 text-red-400" />
+              )}
+              <span className="text-lg font-bold text-white">
                 {sentinel.condition === 'above' ? 'Above' : 'Below'} ${sentinel.threshold.toLocaleString()}
-              </p>
-            </div>
-            <Badge 
-              variant="outline"
-              className={
-                sentinel.payment_method === 'usdc'
-                  ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
-                  : 'bg-green-500/10 text-green-400 border-green-500/30'
-              }
-            >
-              {tokenName}
-            </Badge>
-          </div>
-
-          {/* Funding Instructions (for unfunded) */}
-          {sentinel.status === 'unfunded' && showFundingInstructions && (
-            <FundingInstructions
-              walletAddress={sentinel.wallet_address}
-              paymentMethod={sentinel.payment_method}
-              network={sentinel.network}
-              onCheckBalance={handleCheckBalance}
-              onRequestAirdrop={sentinel.network === 'devnet' ? handleRequestAirdrop : undefined}
-              isCheckingBalance={isCheckingBalance}
-            />
-          )}
-
-          {/* Stats (for monitoring/paused) */}
-          {(sentinel.status === 'monitoring' || sentinel.status === 'paused') && activityCount > 0 && (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 rounded-lg bg-gray-900/50 border border-gray-700">
-                <div className="flex items-center gap-2 mb-1">
-                  <Activity className="w-4 h-4 text-blue-400" />
-                  <p className="text-xs text-gray-400">Checks</p>
-                </div>
-                <p className="text-lg font-bold text-white">{activityCount}</p>
-              </div>
-
-              <div className="p-3 rounded-lg bg-gray-900/50 border border-gray-700">
-                <div className="flex items-center gap-2 mb-1">
-                  <DollarSign className="w-4 h-4 text-green-400" />
-                  <p className="text-xs text-gray-400">Spent</p>
-                </div>
-                <p className="text-lg font-bold text-white">
-                  ${totalSpent.toFixed(4)}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Last Check */}
-          {lastCheckTime && sentinel.status === 'monitoring' && (
-            <div className="flex items-center gap-2 text-xs text-gray-400">
-              <Clock className="w-3 h-3" />
-              <span>
-                Last check {formatDistanceToNow(new Date(lastCheckTime), { addSuffix: true })}
               </span>
             </div>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="text-center p-3 rounded-lg bg-black/20">
+              <Activity className="w-4 h-4 text-blue-400 mx-auto mb-1" />
+              <p className="text-lg font-bold text-white">{activityCount}</p>
+              <p className="text-xs text-gray-400">Checks</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-black/20">
+              <DollarSign className="w-4 h-4 text-green-400 mx-auto mb-1" />
+              <p className="text-lg font-bold text-white">${totalSpent.toFixed(4)}</p>
+              <p className="text-xs text-gray-400">Spent</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-black/20">
+              <Zap className="w-4 h-4 text-purple-400 mx-auto mb-1" />
+              <p className="text-lg font-bold text-white">{estimatedChecks}</p>
+              <p className="text-xs text-gray-400">Est. Left</p>
+            </div>
+          </div>
+
+          {/* Funding Instructions */}
+          {showFundingInstructions && sentinel.status === 'unfunded' && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+            >
+              <FundingInstructions
+                walletAddress={sentinel.wallet_address}
+                paymentMethod={sentinel.payment_method}
+                network={sentinel.network}
+                onCheckBalance={handleCheckBalance}
+                onRequestAirdrop={sentinel.network === 'devnet' ? handleRequestAirdrop : undefined}
+                isCheckingBalance={isCheckingBalance}
+              />
+            </motion.div>
           )}
 
-          {/* Main Action Buttons */}
-          <div className="space-y-2 pt-2">
+          {/* Action Buttons */}
+          <div className="flex gap-2">
             {sentinel.status === 'unfunded' && (
-              <>
-                <PixelButton
-                  onClick={handleCheckBalance}
-                  disabled={isCheckingBalance}
-                  color={colors.primary[500]}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  {isCheckingBalance ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                      Checking...
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      Check Balance
-                    </>
-                  )}
-                </PixelButton>
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-orange-500/10 border border-orange-500/30">
-                  <AlertTriangle className="w-4 h-4 text-orange-400" />
-                  <p className="text-xs text-orange-300">
-                    Fund wallet to start monitoring
-                  </p>
-                </div>
-              </>
+              <PixelButton
+                onClick={handleCheckBalance}
+                disabled={isCheckingBalance}
+                color="#3b82f6"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {isCheckingBalance ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Check Balance
+                  </>
+                )}
+              </PixelButton>
             )}
 
             {sentinel.status === 'ready' && (
               <PixelButton
                 onClick={handleStartMonitoring}
-                color={colors.success[500]}
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
+                color="#10b981"
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
               >
                 <Play className="w-4 h-4 mr-2" />
                 Start Monitoring
@@ -417,51 +408,53 @@ export default function SentinelCardNew({
             {sentinel.status === 'monitoring' && (
               <PixelButton
                 onClick={handleStopMonitoring}
-                color={colors.danger[500]}
-                className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold"
+                color="#f59e0b"
+                className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
               >
                 <Pause className="w-4 h-4 mr-2" />
-                Stop Monitoring
+                Pause
               </PixelButton>
             )}
 
             {sentinel.status === 'paused' && (
               <PixelButton
                 onClick={handleResumeMonitoring}
-                color={colors.success[500]}
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
+                color="#10b981"
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
               >
                 <Play className="w-4 h-4 mr-2" />
-                Resume Monitoring
+                Resume
               </PixelButton>
             )}
 
-            {/* Secondary Actions */}
-            <div className="grid grid-cols-2 gap-2">
-              <PixelButton
-                onClick={handleView}
-                color={colors.primary[500]}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-sm py-2"
-              >
-                <Eye className="w-4 h-4 mr-1" />
-                View
-              </PixelButton>
+            <PixelButton
+              onClick={handleView}
+              color="#6366f1"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+            >
+              <Eye className="w-4 h-4" />
+            </PixelButton>
 
-              {(sentinel.status === 'paused' || sentinel.status === 'unfunded') && onDelete && (
-                <PixelButton
-                  onClick={handleDelete}
-                  disabled={isDeleting}
-                  color="#ef4444"
-                  className="bg-red-600 hover:bg-red-700 text-white text-sm py-2"
-                >
-                  <Trash2 className="w-4 h-4 mr-1" />
-                  {isDeleting ? 'Deleting...' : 'Delete'}
-                </PixelButton>
-              )}
-            </div>
+            <PixelButton
+              onClick={handleDelete}
+              disabled={isDeleting}
+              color="#ef4444"
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              <Trash2 className="w-4 h-4" />
+            </PixelButton>
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Last Check Time */}
+          {lastCheckTime && (
+            <div className="flex items-center gap-2 text-xs text-gray-400 pt-2 border-t border-white/5">
+              <Clock className="w-3 h-3" />
+              <span>Last check: {formatDistanceToNow(new Date(lastCheckTime), { addSuffix: true })}</span>
+            </div>
+          )}
+        </div>
+      </div>
     </motion.div>
   );
 }
+

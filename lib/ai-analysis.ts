@@ -57,22 +57,44 @@ export async function analyzePatterns(
     // Take only the last 50 activities
     const recentActivities = activities.slice(-50);
 
-    // Format prompt
-    let prompt = `You are analyzing SOL/USD price data. Here are the last 50 price checks. Analyze and provide:
-1. Volatility assessment
-2. Price momentum with percentage
-3. Notable patterns
-4. Confidence score 0-100
-5. Brief prediction
-
-Keep under 100 words. Be specific with numbers.
-
-`;
-
-    // Append each activity
-    recentActivities.forEach((activity) => {
-      prompt += `${activity.timestamp.toISOString()}: ${activity.price}\n`;
+    // Get current date for context
+    const currentDate = new Date().toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
     });
+    
+    // Calculate price statistics
+    const prices = recentActivities.map(p => p.price);
+    const currentPrice = prices[0];
+    const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    const priceChange = ((currentPrice - prices[prices.length - 1]) / prices[prices.length - 1] * 100).toFixed(2);
+
+    // Build prompt with price data
+    const prompt = `You are analyzing SOL/USD price data for ${currentDate}. 
+
+Current Context:
+- Current Price: $${currentPrice.toFixed(2)}
+- Average: $${avgPrice.toFixed(2)}
+- Range: $${minPrice.toFixed(2)} - $${maxPrice.toFixed(2)}
+- Change: ${priceChange}%
+- Data Points: ${recentActivities.length} checks
+
+Recent price history (newest first):
+${recentActivities.slice(0, 20).map((p, i) => 
+  `${i + 1}. $${p.price.toFixed(2)} at ${p.timestamp.toLocaleTimeString()}`
+).join('\n')}
+
+Analyze and provide:
+1. Volatility assessment (low/medium/high)
+2. Price momentum with accurate percentage
+3. Notable patterns in THIS data
+4. Confidence score 0-100
+5. Brief prediction based on RECENT data only
+
+IMPORTANT: Base analysis ONLY on the data provided above. Do not reference prices outside this range. Keep under 100 words.`;
 
     // Send request to DeepSeek
     const response = await client.chat.completions.create({

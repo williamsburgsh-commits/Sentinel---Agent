@@ -2,22 +2,55 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Brain, Sparkles, TrendingUp, TrendingDown, Minus, Clock, History } from 'lucide-react';
+import { Brain, Sparkles, TrendingUp, TrendingDown, Minus, Clock, History, Zap, DollarSign } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { getLatestAIAnalysis } from '@/lib/data-store';
 import type { AIAnalysisRow } from '@/types/data';
 import { colors } from '@/lib/design-tokens';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PixelButton } from '@/components/ui/pixel-hover-effect';
+import { showSuccessToast, showErrorToast, showInfoToast } from '@/lib/toast';
 import AIAnalysisHistory from './AIAnalysisHistory';
 
 interface AIInsightsProps {
   sentinel_id: string;
+  sentinel?: {
+    id: string;
+    wallet_address: string;
+    private_key: string;
+    payment_method: 'usdc' | 'cash';
+    network: 'devnet' | 'mainnet';
+    user_id: string;
+  };
 }
 
-export default function AIInsights({ sentinel_id }: AIInsightsProps) {
+export default function AIInsights({ sentinel_id, sentinel }: AIInsightsProps) {
   const [analysis, setAnalysis] = useState<AIAnalysisRow | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [sentinelData, setSentinelData] = useState(sentinel);
+
+  // Load sentinel from localStorage if not provided
+  useEffect(() => {
+    if (!sentinelData) {
+      const storedSentinels = localStorage.getItem('sentinel_agent_sentinels');
+      if (storedSentinels) {
+        const sentinels = JSON.parse(storedSentinels) as Array<{
+          id: string;
+          wallet_address: string;
+          private_key: string;
+          payment_method: 'usdc' | 'cash';
+          network: 'devnet' | 'mainnet';
+          user_id: string;
+        }>;
+        const found = sentinels.find((s) => s.id === sentinel_id);
+        if (found) {
+          setSentinelData(found);
+        }
+      }
+    }
+  }, [sentinel_id, sentinelData]);
 
   useEffect(() => {
     loadAnalysis();
@@ -89,6 +122,76 @@ export default function AIInsights({ sentinel_id }: AIInsightsProps) {
     );
   }
 
+  const handleAnalyzeNow = async () => {
+    if (!sentinelData) {
+      showErrorToast('Error', 'Sentinel data not loaded');
+      return;
+    }
+
+    setIsAnalyzing(true);
+    try {
+      showInfoToast('Analyzing...', 'Fetching live market data');
+      
+      // Fetch live price history from our API endpoint (which calls CoinGecko)
+      console.log('📡 Fetching live SOL price data...');
+      const priceResponse = await fetch('/api/live-price-data');
+      
+      if (!priceResponse.ok) {
+        throw new Error('Failed to fetch live price data');
+      }
+      
+      const priceData = await priceResponse.json();
+      
+      if (!priceData.success) {
+        throw new Error(priceData.error || 'Failed to fetch live price data');
+      }
+      
+      // Add sentinel_id to activities
+      const activities = priceData.activities.map((a: { price: number; created_at: string; triggered: boolean }) => ({
+        ...a,
+        sentinel_id: sentinel_id,
+      }));
+
+      console.log(`📊 Fetched ${activities.length} live price points from CoinGecko`);
+      console.log('📅 Date range:', 
+        new Date(activities[0].created_at).toLocaleString(),
+        'to',
+        new Date(activities[activities.length - 1].created_at).toLocaleString()
+      );
+      console.log('💰 Price range:', 
+        Math.min(...activities.map((a: { price: number }) => a.price)).toFixed(2),
+        'to',
+        Math.max(...activities.map((a: { price: number }) => a.price)).toFixed(2)
+      );
+      
+      const response = await fetch('/api/ai-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          sentinel_id,
+          sentinel: sentinelData,
+          activities, // Pass live data from CoinGecko
+          useLiveData: true // Flag to indicate this is live data
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setAnalysis(data.analysis);
+        showSuccessToast('Analysis Complete!', `Cost: $${data.cost.toFixed(4)} USDC`);
+      } else {
+        showErrorToast('Analysis Failed', data.error || 'Please try again');
+      }
+    } catch (error) {
+      console.error('Error running analysis:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      showErrorToast('Analysis Failed', errorMessage);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   if (!analysis) {
     return (
       <motion.div
@@ -98,14 +201,50 @@ export default function AIInsights({ sentinel_id }: AIInsightsProps) {
       >
         <Card className="bg-gradient-to-br from-purple-900/20 to-blue-900/20 border-purple-500/30 backdrop-blur-xl">
           <CardContent className="py-12 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-purple-500/10 flex items-center justify-center">
-              <Brain className="w-8 h-8 text-purple-400" />
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center">
+              <Brain className="w-10 h-10 text-purple-400" />
             </div>
-            <h3 className="text-lg font-semibold text-white mb-2">AI Analysis Coming Soon</h3>
-            <p className="text-gray-400 text-sm">
-              Need 3 checks for AI analysis
+            <h3 className="text-2xl font-bold text-white mb-3">AI Market Analysis</h3>
+            <p className="text-gray-400 text-sm mb-6 max-w-md mx-auto">
+              Get instant AI-powered insights using live market data from CoinGecko. DeepSeek AI analyzes patterns, volatility, and momentum.
             </p>
-            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-purple-500/10 rounded-lg border border-purple-500/30">
+            
+            {/* Pricing Info */}
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/30">
+                <DollarSign className="w-4 h-4 text-green-400" />
+                <span className="text-sm font-semibold text-green-400">0.04 USDC</span>
+              </div>
+              <span className="text-gray-500 text-sm">per analysis</span>
+            </div>
+
+            {/* Analyze Button */}
+            <PixelButton
+              onClick={handleAnalyzeNow}
+              disabled={isAnalyzing}
+              color="#8b5cf6"
+              className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 text-base font-semibold"
+            >
+              {isAnalyzing ? (
+                <>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    className="inline-block mr-2"
+                  >
+                    <Sparkles className="w-5 h-5" />
+                  </motion.div>
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <Zap className="w-5 h-5 mr-2 inline-block" />
+                  Analyze Now
+                </>
+              )}
+            </PixelButton>
+
+            <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-purple-500/10 rounded-lg border border-purple-500/30">
               <Sparkles className="w-4 h-4 text-purple-400" />
               <span className="text-sm text-purple-300">Powered by DeepSeek AI</span>
             </div>

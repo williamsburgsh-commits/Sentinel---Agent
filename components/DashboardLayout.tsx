@@ -3,7 +3,7 @@
 import { ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { colors, shadows, animations } from '@/lib/design-tokens';
+import { colors, animations } from '@/lib/design-tokens';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -43,52 +43,42 @@ export default function DashboardLayout({
     {
       id: 'activity',
       label: 'Activity',
-      href: '/dashboard',
+      href: '/activity',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
         </svg>
       ),
     },
-    {
-      id: 'settings',
-      label: 'Settings',
-      href: '/dashboard',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-      ),
-    },
   ];
 
   return (
-    <div className="min-h-screen" style={{ background: colors.background.primary }}>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800">
+      {/* Animated background gradient */}
+      <div className="fixed inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5 animate-pulse" style={{ animationDuration: '8s' }} />
+      
       {/* Desktop Sidebar */}
-      <aside
-        className="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col z-50"
-        style={{
-          background: `${colors.background.secondary}cc`,
-          backdropFilter: 'blur(12px)',
-          borderRight: `1px solid ${colors.border.light}`,
-        }}
-      >
-        <div className="flex flex-col flex-1 min-h-0">
+      <aside className="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col z-50">
+        {/* Glassmorphism background */}
+        <div className="absolute inset-0 bg-gray-900/80 backdrop-blur-xl border-r border-white/10" />
+        <div className="relative flex flex-col flex-1 min-h-0">
           {/* Logo */}
-          <div className="flex items-center h-16 flex-shrink-0 px-6" style={{ borderBottom: `1px solid ${colors.border.light}` }}>
+          <div className="flex items-center h-20 flex-shrink-0 px-6 border-b border-white/10">
             <Link href="/" className="flex items-center gap-3 group">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{ background: colors.gradients.primary }}
-              >
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-                </svg>
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
+                <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-2xl shadow-blue-500/50">
+                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
               </div>
-              <span className="text-xl font-bold text-white group-hover:opacity-80 transition-opacity">
-                Sentinel
-              </span>
+              <div>
+                <span className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors">
+                  Sentinel
+                </span>
+                <p className="text-xs text-gray-400">Agent Dashboard</p>
+              </div>
             </Link>
           </div>
 
@@ -99,20 +89,38 @@ export default function DashboardLayout({
               return (
                 <Link key={item.id} href={item.href}>
                   <motion.div
-                    whileHover={{ x: 4 }}
+                    whileHover={{ x: 6, scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all cursor-pointer ${
+                    className={`relative group w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all cursor-pointer overflow-hidden ${
                       isActive
                         ? 'text-white'
                         : 'text-gray-400 hover:text-white'
                     }`}
-                    style={{
-                      background: isActive ? colors.gradients.primary : 'transparent',
-                      boxShadow: isActive ? shadows.primaryGlow : 'none',
-                    }}
                   >
-                    {item.icon}
-                    <span className="font-medium">{item.label}</span>
+                    {/* Active background */}
+                    {isActive && (
+                      <>
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 blur-xl" />
+                        <div className="absolute left-0 inset-y-0 w-1 bg-gradient-to-b from-blue-500 to-purple-600 rounded-r" />
+                      </>
+                    )}
+                    
+                    {/* Hover background */}
+                    {!isActive && (
+                      <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors" />
+                    )}
+                    
+                    <div className="relative z-10 flex items-center gap-3">
+                      <div className={`p-2 rounded-lg transition-colors ${
+                        isActive 
+                          ? 'bg-blue-500/20 text-blue-400' 
+                          : 'bg-gray-800/50 text-gray-400 group-hover:bg-gray-700/50 group-hover:text-white'
+                      }`}>
+                        {item.icon}
+                      </div>
+                      <span className="font-semibold">{item.label}</span>
+                    </div>
                   </motion.div>
                 </Link>
               );
@@ -120,13 +128,17 @@ export default function DashboardLayout({
           </nav>
 
           {/* User Section */}
-          <div className="flex-shrink-0 p-4" style={{ borderTop: `1px solid ${colors.border.light}` }}>
-            <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: `${colors.neutral[800]}80` }}>
-              <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: colors.gradients.success }}>
-                <span className="text-white font-bold text-sm">U</span>
+          <div className="flex-shrink-0 p-4 border-t border-white/10">
+            <div className="relative group flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-gray-800/50 to-gray-800/30 hover:from-gray-700/50 hover:to-gray-700/30 transition-all cursor-pointer overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 to-purple-500/0 group-hover:from-blue-500/10 group-hover:to-purple-500/10 transition-colors" />
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-green-500 to-emerald-600 blur-lg opacity-50" />
+                <div className="relative w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/50">
+                  <span className="text-white font-bold text-sm">U</span>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-white text-sm font-medium truncate">User</p>
+              <div className="relative flex-1 min-w-0">
+                <p className="text-white text-sm font-semibold truncate">User</p>
                 <p className="text-gray-400 text-xs truncate">Sentinel Agent</p>
               </div>
             </div>

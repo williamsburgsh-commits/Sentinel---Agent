@@ -11,15 +11,16 @@ import {
   deleteSentinel,
   getActivityStats,
 } from '@/lib/data-store';
-import type { Sentinel, ActivityStats } from '@/types/data';
-import { showSuccessToast, showErrorToast, showInfoToast } from '@/lib/toast';
+import type { Sentinel, ActivityStats, SentinelStatus } from '@/types/data';
+import { showSuccessToast, showErrorToast } from '@/lib/toast';
 import { PixelButton } from '@/components/ui/pixel-hover-effect';
 import { SentinelCardSkeleton } from '@/components/DashboardSkeletons';
-import SentinelCard from '@/components/SentinelCard';
+import SentinelCardNew from '@/components/SentinelCardNew';
 import DashboardLayout from '@/components/DashboardLayout';
 import { colors } from '@/lib/design-tokens';
-import { Plus, Filter, SortDesc, Play, Pause, Search, X } from 'lucide-react';
+import { Plus, Filter, SortDesc, Search, X } from 'lucide-react';
 import { isMainnet } from '@/lib/networks';
+import { startMonitoring, stopMonitoring, stopAllMonitoring } from '@/lib/monitoring-service';
 
 export default function SentinelsPage() {
   const router = useRouter();
@@ -42,7 +43,11 @@ export default function SentinelsPage() {
     setIsLoading(true);
     try {
       const currentNetwork = isMainnet() ? 'mainnet' : 'devnet';
+      console.log('🔍 Loading sentinels for user:', user.id, 'on network:', currentNetwork);
+      
       const userSentinels = await getSentinels(user.id, currentNetwork);
+      console.log('📊 Found sentinels:', userSentinels.length, userSentinels);
+      
       setSentinels(userSentinels);
 
       const statsPromises = userSentinels.map(async (sentinel) => {
@@ -57,7 +62,7 @@ export default function SentinelsPage() {
       });
       setStats(statsMap);
     } catch (error) {
-      console.error('Error loading sentinels:', error);
+      console.error('❌ Error loading sentinels:', error);
       showErrorToast('Failed to load sentinels', 'Please refresh the page');
     } finally {
       setIsLoading(false);
@@ -68,30 +73,55 @@ export default function SentinelsPage() {
     if (user) loadSentinels();
   }, [user, loadSentinels]);
 
-  const handlePauseSentinel = async (sentinelId: string) => {
-    try {
-      await updateSentinel(sentinelId, { is_active: false });
-      showInfoToast('Sentinel Paused', 'Monitoring has been paused');
-      await loadSentinels();
-    } catch (error) {
-      console.error('Error pausing sentinel:', error);
-      showErrorToast('Failed to pause sentinel', 'Please try again');
-    }
-  };
+  // Start monitoring for active sentinels on mount
+  useEffect(() => {
+    const activeSentinels = sentinels.filter(s => s.status === 'monitoring' && s.is_active);
+    
+    activeSentinels.forEach(sentinel => {
+      console.log(`🚀 Auto-starting monitoring for sentinel ${sentinel.id}`);
+      startMonitoring(sentinel);
+    });
 
-  const handleResumeSentinel = async (sentinelId: string) => {
+    // Cleanup: stop all monitoring when component unmounts
+    return () => {
+      console.log('🛑 Stopping all monitoring (component unmount)');
+      stopAllMonitoring();
+    };
+  }, [sentinels]);
+
+  const handleStatusChange = async (sentinelId: string, newStatus: SentinelStatus) => {
     try {
-      for (const s of sentinels) {
-        if (s.id !== sentinelId && s.is_active) {
-          await updateSentinel(s.id, { is_active: false });
+      const sentinel = sentinels.find(s => s.id === sentinelId);
+      if (!sentinel) return;
+
+      const updates: Partial<Sentinel> = { status: newStatus };
+      
+      // Update is_active based on status
+      if (newStatus === 'monitoring') {
+        updates.is_active = true;
+        // Start monitoring
+        await updateSentinel(sentinelId, updates);
+        await loadSentinels();
+        
+        // Get updated sentinel
+        const updatedSentinels = await getSentinels(user!.id, isMainnet() ? 'mainnet' : 'devnet');
+        const updatedSentinel = updatedSentinels.find(s => s.id === sentinelId);
+        if (updatedSentinel) {
+          startMonitoring(updatedSentinel);
         }
+      } else if (newStatus === 'paused' || newStatus === 'unfunded') {
+        updates.is_active = false;
+        // Stop monitoring
+        stopMonitoring(sentinelId);
+        await updateSentinel(sentinelId, updates);
+        await loadSentinels();
+      } else {
+        await updateSentinel(sentinelId, updates);
+        await loadSentinels();
       }
-      await updateSentinel(sentinelId, { is_active: true });
-      showSuccessToast('Sentinel Resumed', 'Monitoring has been resumed');
-      await loadSentinels();
     } catch (error) {
-      console.error('Error resuming sentinel:', error);
-      showErrorToast('Failed to resume sentinel', 'Please try again');
+      console.error('Error updating sentinel status:', error);
+      showErrorToast('Failed to update status', 'Please try again');
     }
   };
 
@@ -103,30 +133,6 @@ export default function SentinelsPage() {
     } catch (error) {
       console.error('Error deleting sentinel:', error);
       showErrorToast('Failed to delete sentinel', 'Please try again');
-    }
-  };
-
-  const handlePauseAll = async () => {
-    try {
-      const activeSentinels = sentinels.filter(s => s.is_active);
-      await Promise.all(activeSentinels.map(s => updateSentinel(s.id, { is_active: false })));
-      showInfoToast('All Paused', `Paused ${activeSentinels.length} sentinels`);
-      await loadSentinels();
-    } catch (err) {
-      console.error('Error pausing all:', err);
-      showErrorToast('Failed to pause all', 'Please try again');
-    }
-  };
-
-  const handleResumeAll = async () => {
-    try {
-      const pausedSentinels = sentinels.filter(s => !s.is_active);
-      await Promise.all(pausedSentinels.map(s => updateSentinel(s.id, { is_active: true })));
-      showSuccessToast('All Resumed', `Resumed ${pausedSentinels.length} sentinels`);
-      await loadSentinels();
-    } catch (err) {
-      console.error('Error resuming all:', err);
-      showErrorToast('Failed to resume all', 'Please try again');
     }
   };
 
@@ -233,28 +239,6 @@ export default function SentinelsPage() {
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="flex gap-2 mt-3 pt-3 border-t border-gray-700">
-              <PixelButton
-                onClick={handlePauseAll}
-                color="#f59e0b"
-                className="bg-yellow-600 hover:bg-yellow-700 text-white text-sm"
-                disabled={sentinels.filter(s => s.is_active).length === 0}
-              >
-                <Pause className="w-4 h-4 mr-1" />
-                Pause All
-              </PixelButton>
-
-              <PixelButton
-                onClick={handleResumeAll}
-                color="#10b981"
-                className="bg-green-600 hover:bg-green-700 text-white text-sm"
-                disabled={sentinels.filter(s => !s.is_active).length === 0}
-              >
-                <Play className="w-4 h-4 mr-1" />
-                Resume All
-              </PixelButton>
-            </div>
           </CardContent>
         </Card>
 
@@ -268,14 +252,10 @@ export default function SentinelsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <AnimatePresence>
               {filteredAndSortedSentinels.map((sentinel) => (
-                <SentinelCard
+                <SentinelCardNew
                   key={sentinel.id}
                   sentinel={sentinel}
-                  activityCount={stats[sentinel.id]?.total_checks || 0}
-                  totalSpent={stats[sentinel.id]?.total_spent || 0}
-                  lastCheckTime={stats[sentinel.id]?.last_check}
-                  onPause={handlePauseSentinel}
-                  onResume={handleResumeSentinel}
+                  onStatusChange={handleStatusChange}
                   onDelete={handleDeleteSentinel}
                 />
               ))}
