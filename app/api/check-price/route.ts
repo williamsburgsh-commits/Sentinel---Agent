@@ -17,25 +17,41 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Error fetching SOL price:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch SOL price.' },
-      { status: 500 }
-    );
+    
+    // Return error details in response (always 200 with success: false)
+    const errorMessage = error instanceof Error 
+      ? error.message 
+      : 'Failed to fetch SOL price.';
+    
+    return NextResponse.json({
+      success: false,
+      error: errorMessage,
+    });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     // Parse request body
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch (jsonError) {
+      console.error('Failed to parse request body:', jsonError);
+      return NextResponse.json({
+        success: false,
+        error: 'Invalid JSON in request body.',
+      });
+    }
+    
     const sentinelConfig: SentinelConfig = body;
 
     // Validate that we have a valid config
     if (!sentinelConfig || !sentinelConfig.id) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid sentinel configuration.' },
-        { status: 400 }
-      );
+      return NextResponse.json({
+        success: false,
+        error: 'Invalid sentinel configuration.',
+      });
     }
 
     // Run the sentinel check
@@ -100,9 +116,15 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error running sentinel check:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to run sentinel check.' },
-      { status: 500 }
-    );
+    
+    // Return error details in response (always 200 with success: false)
+    const errorMessage = error instanceof Error 
+      ? error.message 
+      : 'Failed to run sentinel check.';
+    
+    return NextResponse.json({
+      success: false,
+      error: errorMessage,
+    });
   }
 }
