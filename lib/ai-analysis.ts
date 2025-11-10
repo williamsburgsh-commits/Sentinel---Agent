@@ -9,10 +9,23 @@ import OpenAI from 'openai';
  * 
  * Get your API key from: https://platform.deepseek.com
  */
-export const deepseekClient = new OpenAI({
-  baseURL: 'https://api.deepseek.com',
-  apiKey: process.env.DEEPSEEK_API_KEY,
-});
+let deepseekClient: OpenAI | null = null;
+
+function getDeepSeekClient(): OpenAI | null {
+  if (!process.env.DEEPSEEK_API_KEY) {
+    console.warn('⚠️ DEEPSEEK_API_KEY not set - AI analysis will be disabled');
+    return null;
+  }
+  
+  if (!deepseekClient) {
+    deepseekClient = new OpenAI({
+      baseURL: 'https://api.deepseek.com',
+      apiKey: process.env.DEEPSEEK_API_KEY,
+    });
+  }
+  
+  return deepseekClient;
+}
 
 export interface AIAnalysis {
   analysis_text: string;
@@ -26,6 +39,21 @@ export async function analyzePatterns(
   activities: Array<{ price: number; timestamp: Date }>
 ): Promise<AIAnalysis> {
   try {
+    // Get the DeepSeek client (returns null if API key not set)
+    const client = getDeepSeekClient();
+    
+    if (!client) {
+      // Return graceful fallback when API key is not configured
+      console.log('⚠️ AI analysis skipped - DEEPSEEK_API_KEY not configured');
+      return {
+        analysis_text: 'AI analysis not configured - set DEEPSEEK_API_KEY to enable DeepSeek AI insights',
+        confidence_score: 0,
+        sentiment: 'neutral',
+        cost: 0,
+        timestamp: new Date(),
+      };
+    }
+    
     // Take only the last 50 activities
     const recentActivities = activities.slice(-50);
 
@@ -43,11 +71,11 @@ Keep under 100 words. Be specific with numbers.
 
     // Append each activity
     recentActivities.forEach((activity) => {
-      prompt += `${activity.timestamp.toISOString()}: $${activity.price}\n`;
+      prompt += `${activity.timestamp.toISOString()}: ${activity.price}\n`;
     });
 
     // Send request to DeepSeek
-    const response = await deepseekClient.chat.completions.create({
+    const response = await client.chat.completions.create({
       model: 'deepseek-chat',
       max_tokens: 300,
       temperature: 0.7,
