@@ -5,6 +5,8 @@
 
 // ==================== SENTINELS ====================
 
+export type SentinelStatus = 'unfunded' | 'ready' | 'monitoring' | 'paused';
+
 export interface Sentinel {
   id: string;
   user_id: string;
@@ -16,6 +18,7 @@ export interface Sentinel {
   discord_webhook: string;
   network: 'devnet' | 'mainnet';
   is_active: boolean;
+  status: SentinelStatus; // Current state of the sentinel
   created_at: string; // ISO 8601 timestamp
   updated_at: string; // ISO 8601 timestamp
 }
@@ -41,6 +44,7 @@ export interface SentinelUpdate {
   discord_webhook?: string;
   network?: 'devnet' | 'mainnet';
   is_active?: boolean;
+  status?: SentinelStatus;
   updated_at?: string;
 }
 

@@ -26,7 +26,7 @@ import { ButtonSpinner } from '@/components/LoadingSpinner';
 import SuccessAnimation from '@/components/SuccessAnimation';
 import AnimatedInput from '@/components/AnimatedInput';
 import { SentinelCardSkeleton, PriceDisplaySkeleton } from '@/components/DashboardSkeletons';
-import SentinelCard from '@/components/SentinelCard';
+import SentinelCardNew from '@/components/SentinelCardNew';
 import PriceDisplay from '@/components/PriceDisplay';
 import DashboardLayout from '@/components/DashboardLayout';
 import GlassCard from '@/components/GlassCard';
@@ -538,65 +538,6 @@ export default function DashboardPage() {
     }
   };
 
-  const handlePauseSentinel = async (sentinelId: string) => {
-    try {
-      await updateSentinel(sentinelId, { is_active: false });
-      showInfoToast('Sentinel Paused', 'Monitoring has been paused');
-      await loadSentinels();
-    } catch (error) {
-      console.error('Error pausing sentinel:', error);
-      showErrorToast('Failed to pause sentinel', 'Please try again');
-    }
-  };
-
-  const handleResumeSentinel = async (sentinelId: string) => {
-    try {
-      // Find the sentinel to check its balance
-      const sentinel = sentinels.find(s => s.id === sentinelId);
-      if (!sentinel) {
-        showErrorToast('Sentinel not found', 'Please refresh the page');
-        return;
-      }
-
-      // Check balance before resuming
-      const { PublicKey } = await import('@solana/web3.js');
-      const { getUSDCBalance, getCASHBalance } = await import('@/lib/payments');
-      
-      const walletPublicKey = new PublicKey(sentinel.wallet_address);
-      const minBalance = 0.0001; // Minimum balance for one check
-      
-      let tokenBalance: number;
-      if (sentinel.payment_method === 'cash') {
-        tokenBalance = await getCASHBalance(walletPublicKey);
-      } else {
-        tokenBalance = await getUSDCBalance(walletPublicKey);
-      }
-      
-      if (tokenBalance < minBalance) {
-        const tokenName = sentinel.payment_method === 'cash' ? 'CASH' : 'USDC';
-        showErrorToast(
-          'Insufficient Balance',
-          `Your wallet needs at least ${minBalance} ${tokenName} to start monitoring. Please fund your wallet first.`
-        );
-        return;
-      }
-
-      // Deactivate all other sentinels first
-      for (const s of sentinels) {
-        if (s.id !== sentinelId && s.is_active) {
-          await updateSentinel(s.id, { is_active: false });
-        }
-      }
-
-      // Activate this sentinel
-      await updateSentinel(sentinelId, { is_active: true });
-      showSuccessToast('Sentinel Resumed', 'Monitoring has been resumed');
-      await loadSentinels();
-    } catch (error) {
-      console.error('Error resuming sentinel:', error);
-      showErrorToast('Failed to resume sentinel', 'Please try again');
-    }
-  };
 
   const handleDeleteSentinel = async (sentinelId: string) => {
     try {
@@ -606,6 +547,16 @@ export default function DashboardPage() {
     } catch (error) {
       console.error('Error deleting sentinel:', error);
       showErrorToast('Failed to delete sentinel', 'Please try again');
+    }
+  };
+
+  const handleStatusChange = async (sentinelId: string, status: Sentinel['status'], isActive: boolean) => {
+    try {
+      await updateSentinel(sentinelId, { status, is_active: isActive });
+      await loadSentinels();
+    } catch (error) {
+      console.error('Error updating sentinel status:', error);
+      showErrorToast('Failed to update status', 'Please try again');
     }
   };
 
@@ -722,7 +673,7 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-7xl mx-auto p-6 space-y-8">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -1083,14 +1034,13 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <AnimatePresence>
                     {filteredAndSortedSentinels.map((sentinel) => (
-                      <SentinelCard
+                      <SentinelCardNew
                         key={sentinel.id}
                         sentinel={sentinel}
                         activityCount={stats[sentinel.id]?.total_checks || 0}
                         totalSpent={stats[sentinel.id]?.total_spent || 0}
                         lastCheckTime={stats[sentinel.id]?.last_check}
-                        onPause={handlePauseSentinel}
-                        onResume={handleResumeSentinel}
+                        onStatusChange={handleStatusChange}
                         onDelete={handleDeleteSentinel}
                       />
                     ))}

@@ -272,8 +272,15 @@ export default function PriceChart({ sentinelId }: PriceChartProps) {
               <defs>
                 {/* Gradient for line fill */}
                 <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity={0.4} />
-                  <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#3498db" stopOpacity={0.8} />
+                  <stop offset="50%" stopColor="#9b59b6" stopOpacity={0.4} />
+                  <stop offset="100%" stopColor="#3498db" stopOpacity={0} />
+                </linearGradient>
+                {/* Gradient for line stroke */}
+                <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#3498db" />
+                  <stop offset="50%" stopColor="#9b59b6" />
+                  <stop offset="100%" stopColor="#3498db" />
                 </linearGradient>
               </defs>
 
@@ -312,11 +319,11 @@ export default function PriceChart({ sentinelId }: PriceChartProps) {
               <Line
                 type="monotone"
                 dataKey="price"
-                stroke="#10b981"
+                stroke="url(#lineGradient)"
                 strokeWidth={3}
                 fill="url(#priceGradient)"
                 dot={<CustomDot />}
-                activeDot={{ r: 6, fill: '#10b981', stroke: '#fff', strokeWidth: 2 }}
+                activeDot={{ r: 6, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2 }}
                 animationDuration={isAnimating ? 1500 : 0}
                 animationEasing="ease-in-out"
               />
@@ -349,8 +356,8 @@ export default function PriceChart({ sentinelId }: PriceChartProps) {
       {chartData.length > 0 && (
         <div className="flex items-center justify-center gap-6 mt-6 pt-6 border-t" style={{ borderColor: colors.border.light }}>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-green-500" />
-            <span className="text-gray-400 text-sm">Price</span>
+            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-500" />
+            <span className="text-gray-400 text-sm">Price Trend</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />

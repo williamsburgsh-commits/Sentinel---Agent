@@ -186,7 +186,7 @@ export async function createSentinel(
     // Deactivate existing sentinels on this network
     await deactivateAllSentinels(userId, config.network);
 
-    // Create new sentinel
+    // Create new sentinel with unfunded status
     const now = new Date().toISOString();
     const newSentinel: Sentinel = {
       id: generateId('sentinel'),
@@ -198,7 +198,8 @@ export async function createSentinel(
       payment_method: config.payment_method,
       discord_webhook: config.discord_webhook,
       network: config.network,
-      is_active: true,
+      is_active: false, // Start as inactive
+      status: 'unfunded', // Start as unfunded
       created_at: now,
       updated_at: now,
     };
@@ -233,6 +234,17 @@ export async function getSentinels(
       sentinels = sentinels.filter((s) => s.network === network);
     }
 
+    // Migrate old sentinels without status field
+    sentinels = sentinels.map(sentinel => {
+      if (!sentinel.status) {
+        return {
+          ...sentinel,
+          status: sentinel.is_active ? ('monitoring' as const) : ('paused' as const),
+        };
+      }
+      return sentinel;
+    });
+
     // Sort by created_at descending
     sentinels.sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -241,7 +253,7 @@ export async function getSentinels(
     console.log(`✅ Loaded ${sentinels.length} sentinels`);
     return sentinels;
   } catch (error) {
-    console.error('Error loading sentinels:', error);
+    console.error('Error getting sentinels:', error);
     return [];
   }
 }
@@ -360,6 +372,7 @@ export async function saveSentinel(sentinel: SentinelInsert): Promise<Sentinel |
     const newSentinel: Sentinel = {
       id: generateId('sentinel'),
       ...sentinel,
+      status: 'unfunded', // Default status for new sentinels
       created_at: now,
       updated_at: now,
     };

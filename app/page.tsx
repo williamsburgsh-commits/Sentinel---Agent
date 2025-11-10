@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { motion, useInView, useAnimation } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { colors, typography, animations, shadows } from '@/lib/design-tokens';
+import { colors, animations, shadows } from '@/lib/design-tokens';
 
 // Animated counter component
 function AnimatedCounter({ end, duration = 2, suffix = '' }: { end: number; duration?: number; suffix?: string }) {
@@ -157,17 +157,12 @@ export default function Home() {
                 />
               </motion.div>
 
-              {/* Subheading */}
+              {/* Subheading - "AI that works for you" */}
               <motion.p
                 variants={animations.slideUp}
                 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-gray-200 max-w-4xl mx-auto"
-                style={{ lineHeight: typography.lineHeight.tight }}
               >
-                Autonomous On-Chain Monitoring
-                <br />
-                <span className="text-xl sm:text-2xl md:text-3xl font-normal text-gray-400 mt-4 block">
-                  Powered by Micropayments
-                </span>
+                AI that works for you
               </motion.p>
 
               {/* Description */}
@@ -178,8 +173,8 @@ export default function Home() {
                 Set price alerts, monitor Solana blockchain activity, and receive instant notifications—all running autonomously with pay-per-use micropayments.
               </motion.p>
 
-              {/* CTA Button */}
-              <motion.div variants={animations.scale} className="pt-8">
+              {/* CTA Buttons */}
+              <motion.div variants={animations.scale} className="pt-8 flex flex-wrap gap-4 justify-center">
                 <Link href="/dashboard">
                   <motion.div
                     whileHover={{ scale: 1.05 }}
@@ -199,6 +194,21 @@ export default function Home() {
                         className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
                         style={{ background: colors.gradients.primaryHover }}
                       />
+                    </Button>
+                  </motion.div>
+                </Link>
+                <Link href="#features">
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="inline-block"
+                  >
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="text-xl px-12 py-8 font-bold text-white border-2 border-gray-600 hover:border-gray-500 hover:bg-white/10"
+                    >
+                      Learn More
                     </Button>
                   </motion.div>
                 </Link>
@@ -234,7 +244,7 @@ export default function Home() {
         </section>
 
         {/* Features Section */}
-        <section className="py-32 px-4 sm:px-6 lg:px-8">
+        <section id="features" className="py-32 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
             <motion.div
               initial="initial"

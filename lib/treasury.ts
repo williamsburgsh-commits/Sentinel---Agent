@@ -1,4 +1,4 @@
-import { Keypair } from '@solana/web3.js';
+import { Keypair, PublicKey } from '@solana/web3.js';
 import bs58 from 'bs58';
 
 /**
@@ -83,7 +83,20 @@ export function getOracleAddress(): string {
  * @returns The oracle's PublicKey
  */
 export function getOraclePublicKey() {
-  return oracleKeypair.publicKey;
+  // Use the configured payment recipient wallet from environment
+  const recipientAddress = process.env.NEXT_PUBLIC_PAYMENT_RECIPIENT_WALLET;
+  
+  if (!recipientAddress) {
+    console.warn('⚠️  NEXT_PUBLIC_PAYMENT_RECIPIENT_WALLET not configured, using generated wallet');
+    console.warn('⚠️  Payments will go to:', oracleKeypair.publicKey.toBase58());
+    return oracleKeypair.publicKey;
+  }
+  
+  console.log('✅ ========================================');
+  console.log('✅ PAYMENT RECIPIENT WALLET CONFIGURED');
+  console.log('✅ All payments will go to:', recipientAddress);
+  console.log('✅ ========================================');
+  return new PublicKey(recipientAddress);
 }
 
 /**

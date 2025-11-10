@@ -233,5 +233,15 @@ export function getNetworkDisplayInfo() {
   };
 }
 
+/**
+ * Get RPC endpoint for a specific network
+ */
+export function getRPCEndpoint(network: NetworkType = 'devnet'): string {
+  if (network === 'mainnet') {
+    return MAINNET_CONFIG.rpcUrl;
+  }
+  return DEVNET_CONFIG.rpcUrl;
+}
+
 // Export current network as default
 export const CURRENT_NETWORK = getCurrentNetwork();

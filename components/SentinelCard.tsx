@@ -14,7 +14,9 @@ import {
   Play,
   Eye,
   Trash2,
-  AlertCircle
+  AlertCircle,
+  Copy,
+  Check
 } from 'lucide-react';
 import type { Sentinel } from '@/types/data';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -46,9 +48,16 @@ export default function SentinelCard({
 }: SentinelCardProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  const truncateAddress = (address: string) => {
-    return `${address.slice(0, 4)}...${address.slice(-4)}`;
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
   };
 
   const handleView = () => {
@@ -109,12 +118,35 @@ export default function SentinelCard({
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {/* Wallet Address */}
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-gray-900/50 border border-gray-700">
-            <Wallet className="w-4 h-4 text-gray-400" />
-            <span className="text-sm text-gray-300 font-mono">
-              {truncateAddress(sentinel.wallet_address)}
-            </span>
+          {/* Wallet Address - Full with Copy */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Wallet className="w-4 h-4 text-blue-400" />
+                <span className="text-xs text-gray-400 font-semibold">Wallet Address</span>
+              </div>
+              <button
+                onClick={() => copyToClipboard(sentinel.wallet_address)}
+                className="flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 transition-colors"
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-3 h-3 text-green-400" />
+                    <span className="text-xs text-green-400">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3 text-blue-400" />
+                    <span className="text-xs text-blue-400">Copy</span>
+                  </>
+                )}
+              </button>
+            </div>
+            <div className="p-3 rounded-lg bg-gray-900/50 border border-gray-700">
+              <p className="text-xs text-gray-300 font-mono break-all">
+                {sentinel.wallet_address}
+              </p>
+            </div>
           </div>
 
           {/* Threshold & Condition */}
