@@ -1,14 +1,17 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format, subHours, subDays, subMonths, isAfter } from 'date-fns';
-import { SentinelActivity } from '@/types';
 import { colors, shadows, animations } from '@/lib/design-tokens';
+import { getActivities } from '@/lib/data-store';
+import type { Activity } from '@/types/data';
 
 interface PriceChartProps {
-  activities: SentinelActivity[];
+  sentinelId: string;
+  threshold?: number;
+  condition?: 'above' | 'below';
 }
 
 type TimeRange = '1H' | '24H' | '7D' | '1M';
@@ -20,9 +23,39 @@ interface ChartDataPoint {
   formattedTime: string;
 }
 
-export default function PriceChart({ activities }: PriceChartProps) {
+export default function PriceChart({ sentinelId }: PriceChartProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>('24H');
   const [isAnimating, setIsAnimating] = useState(true);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch ALL activities for this sentinel (no limit)
+  useEffect(() => {
+    const fetchActivities = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch ALL activities - no limit to fix the 20-activity bug
+        const { activities: fetchedActivities } = await getActivities(sentinelId, {
+          limit: 10000, // Very high limit to ensure we get all activities
+          orderBy: 'created_at',
+          ascending: false,
+        });
+        console.log(`📊 PriceChart: Loaded ${fetchedActivities.length} activities for sentinel ${sentinelId}`);
+        setActivities(fetchedActivities);
+      } catch (error) {
+        console.error('Error fetching activities for chart:', error);
+        setActivities([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchActivities();
+
+    // Auto-refresh every 5 seconds to pick up new activities
+    const interval = setInterval(fetchActivities, 5000);
+    return () => clearInterval(interval);
+  }, [sentinelId]);
 
   // Filter and prepare chart data based on time range
   const chartData = useMemo(() => {
@@ -48,17 +81,22 @@ export default function PriceChart({ activities }: PriceChartProps) {
 
     // Ensure activities is always an array to prevent filter errors
     const safeActivities = activities || [];
+    
     // Filter activities within time range and sort by timestamp
+    // Note: Activity type uses created_at instead of timestamp
     const filteredActivities = safeActivities
-      .filter(activity => isAfter(new Date(activity.timestamp), cutoffDate))
-      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+      .filter(activity => isAfter(new Date(activity.created_at), cutoffDate))
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+    console.log(`📊 PriceChart: Showing ${filteredActivities.length} activities for ${timeRange} range`);
+    console.log(`📊 Sample prices:`, filteredActivities.slice(0, 5).map(a => ({ price: a.price, created_at: a.created_at })));
 
     // Convert to chart data points
     return filteredActivities.map(activity => ({
-      timestamp: new Date(activity.timestamp).getTime(),
+      timestamp: new Date(activity.created_at).getTime(),
       price: activity.price,
       triggered: activity.triggered,
-      formattedTime: format(new Date(activity.timestamp), 'MMM d, HH:mm'),
+      formattedTime: format(new Date(activity.created_at), 'MMM d, HH:mm'),
     }));
   }, [activities, timeRange]);
 
@@ -211,7 +249,14 @@ export default function PriceChart({ activities }: PriceChartProps) {
       </div>
 
       {/* Chart */}
-      {chartData.length > 0 ? (
+      {isLoading ? (
+        <div className="w-full h-80 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-400 text-sm">Loading chart data...</p>
+          </div>
+        </div>
+      ) : chartData.length > 0 ? (
         <motion.div
           key={timeRange}
           initial={{ opacity: 0, y: 20 }}

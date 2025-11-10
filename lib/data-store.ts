@@ -396,13 +396,35 @@ export async function createActivity(
 ): Promise<Activity | null> {
   try {
     console.log(`💾 Creating activity (${isServer ? 'server' : 'browser'} context)`);
+    console.log('💰 Activity data received:', {
+      price: activityData.price,
+      cost: activityData.cost,
+      priceType: typeof activityData.price,
+      costType: typeof activityData.cost,
+    });
+
+    // Ensure price is a valid number
+    const price = typeof activityData.price === 'number' && !isNaN(activityData.price) 
+      ? activityData.price 
+      : 0;
+    
+    const cost = typeof activityData.cost === 'number' && !isNaN(activityData.cost)
+      ? activityData.cost
+      : 0;
+
+    if (price === 0 && activityData.price !== 0) {
+      console.error('⚠️ WARNING: Price was invalid and defaulted to 0!', {
+        originalPrice: activityData.price,
+        priceType: typeof activityData.price,
+      });
+    }
 
     const newActivity: Activity = {
       id: generateId('activity'),
       user_id: userId,
       sentinel_id: sentinelId,
-      price: activityData.price,
-      cost: activityData.cost,
+      price: price,
+      cost: cost,
       settlement_time: activityData.settlement_time || null,
       payment_method: activityData.payment_method || null,
       transaction_signature: activityData.transaction_signature || null,
@@ -410,6 +432,12 @@ export async function createActivity(
       status: activityData.status || 'success',
       created_at: new Date().toISOString(),
     };
+
+    console.log('💾 Activity object to save:', {
+      price: newActivity.price,
+      cost: newActivity.cost,
+      status: newActivity.status,
+    });
 
     // Get existing activities
     const activities = getActivitiesFromStorage();
@@ -422,7 +450,7 @@ export async function createActivity(
 
     saveActivitiesToStorage(activities);
 
-    console.log('✅ Activity created');
+    console.log('✅ Activity created with price:', newActivity.price, 'and cost:', newActivity.cost);
     return newActivity;
   } catch (error) {
     console.error('Error creating activity:', error);
