@@ -8,15 +8,16 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createBrowserClient } from '@/lib/supabase';
 import {
-  createSentinel,
-  getSentinels,
-  updateSentinel,
+  createSentinel as createSentinelDB,
+  getSentinels as getSentinelsDB,
+  updateSentinel as updateSentinelDB,
   deleteSentinel as deleteSentinelFromDB,
-  getActivityStats,
-  fetchUserActivities,
+  getActivityStats as getActivityStatsDB,
+  fetchUserActivities as fetchUserActivitiesDB,
   Sentinel,
   Activity,
 } from '@/lib/database';
+import * as MockDB from '@/lib/mock-database';
 import { 
   showSuccessToast, 
   showErrorToast, 
@@ -40,6 +41,65 @@ import { colors } from '@/lib/design-tokens';
 import { Keypair } from '@solana/web3.js';
 import { Plus, LogOut, Filter, SortDesc, Play, Pause, FileText, Search, X } from 'lucide-react';
 import { isMainnet, getNetworkDisplayInfo } from '@/lib/networks';
+
+// ==================== DATABASE WRAPPER FUNCTIONS ====================
+// These functions try Supabase first, then fall back to localStorage if it fails
+
+async function createSentinel(userId: string, config: any): Promise<Sentinel | null> {
+  try {
+    return await createSentinelDB(userId, config);
+  } catch (error) {
+    console.warn('⚠️  Supabase failed, using localStorage fallback');
+    return await MockDB.createSentinel(userId, config);
+  }
+}
+
+async function getSentinels(userId: string, network?: 'devnet' | 'mainnet'): Promise<Sentinel[]> {
+  try {
+    return await getSentinelsDB(userId, network);
+  } catch (error) {
+    console.warn('⚠️  Supabase failed, using localStorage fallback');
+    return await MockDB.getSentinels(userId, network);
+  }
+}
+
+async function updateSentinel(sentinelId: string, updates: Partial<Sentinel>): Promise<Sentinel | null> {
+  try {
+    return await updateSentinelDB(sentinelId, updates);
+  } catch (error) {
+    console.warn('⚠️  Supabase failed, using localStorage fallback');
+    return await MockDB.updateSentinel(sentinelId, updates);
+  }
+}
+
+async function deleteSentinel(sentinelId: string): Promise<boolean> {
+  try {
+    return await deleteSentinelFromDB(sentinelId);
+  } catch (error) {
+    console.warn('⚠️  Supabase failed, using localStorage fallback');
+    return await MockDB.deleteSentinel(sentinelId);
+  }
+}
+
+async function getActivityStats(userId?: string, sentinelId?: string): Promise<any> {
+  try {
+    return await getActivityStatsDB(userId, sentinelId);
+  } catch (error) {
+    console.warn('⚠️  Supabase failed, using localStorage fallback');
+    return await MockDB.getActivityStats(userId, sentinelId);
+  }
+}
+
+async function fetchUserActivities(userId: string, limit?: number): Promise<Activity[]> {
+  try {
+    return await fetchUserActivitiesDB(userId, limit);
+  } catch (error) {
+    console.warn('⚠️  Supabase failed, using localStorage fallback');
+    return await MockDB.fetchUserActivities(userId, limit);
+  }
+}
+
+// ==================== END DATABASE WRAPPERS ====================
 
 export default function DashboardPage() {
   const router = useRouter();
