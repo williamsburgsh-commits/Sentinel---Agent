@@ -3,6 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { SentinelActivity } from '@/types';
+import { getCurrentNetwork } from '@/lib/networks';
 
 interface ActivityLogProps {
   activities: SentinelActivity[];
@@ -44,7 +45,9 @@ export default function ActivityLog({ activities }: ActivityLogProps) {
   };
 
   const getSolscanUrl = (signature: string) => {
-    return `https://solscan.io/tx/${signature}?cluster=devnet`;
+    const network = getCurrentNetwork();
+    const cluster = network.isMainnet ? '' : '?cluster=devnet';
+    return `https://solscan.io/tx/${signature}${cluster}`;
   };
 
   const formatSettlementTime = (ms: number) => {

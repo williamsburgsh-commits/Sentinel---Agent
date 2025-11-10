@@ -34,6 +34,7 @@ import MainnetConfirmationModal from '@/components/MainnetConfirmationModal';
 import DashboardStats from '@/components/DashboardStats';
 import GlobalActivityFeed from '@/components/GlobalActivityFeed';
 import AIInsights from '@/components/AIInsights';
+import PriceChart from '@/components/PriceChart';
 import { colors } from '@/lib/design-tokens';
 import { Keypair } from '@solana/web3.js';
 import bs58 from 'bs58';
@@ -291,6 +292,105 @@ export default function DashboardPage() {
       loadGlobalActivities();
     }
   }, [user, loadSentinels, loadGlobalActivities]);
+
+  // Monitor active sentinels with automatic price checking
+  useEffect(() => {
+    if (!user || sentinels.length === 0) return;
+
+    console.log('🔄 Setting up monitoring for active sentinels...');
+
+    // Clear existing intervals
+    monitoringIntervalsRef.current.forEach(interval => clearInterval(interval));
+    monitoringIntervalsRef.current.clear();
+
+    // Create interval for each active sentinel
+    const activeSentinels = sentinels.filter(s => s.is_active);
+    console.log(`📊 Found ${activeSentinels.length} active sentinels to monitor`);
+
+    activeSentinels.forEach(sentinel => {
+      console.log(`🚀 Starting monitoring for sentinel ${sentinel.id} (${sentinel.wallet_address.slice(0, 8)}...)`);
+      
+      const runCheck = async () => {
+        try {
+          console.log(`⏰ Running scheduled check for sentinel ${sentinel.id}`);
+          
+          // Call the check-price API
+          const response = await fetch('/api/check-price', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: sentinel.id,
+              userId: sentinel.user_id,
+              walletAddress: sentinel.wallet_address,
+              privateKey: sentinel.private_key,
+              threshold: sentinel.threshold,
+              condition: sentinel.condition,
+              discordWebhook: sentinel.discord_webhook,
+              paymentMethod: sentinel.payment_method,
+              network: sentinel.network,
+              isActive: sentinel.is_active,
+              createdAt: new Date(sentinel.created_at),
+            }),
+          });
+
+          const result = await response.json();
+          
+          if (result.success) {
+            console.log('✅ Check completed successfully');
+            console.log('   Price:', result.activity.price);
+            console.log('   Cost:', result.activity.cost);
+            console.log('   Triggered:', result.activity.triggered);
+            
+            // Save activity to localStorage
+            await createActivity(sentinel.id, user.id, {
+              price: result.activity.price,
+              cost: result.activity.cost,
+              settlement_time: result.activity.settlementTimeMs,
+              payment_method: sentinel.payment_method,
+              transaction_signature: result.activity.transactionSignature,
+              triggered: result.activity.triggered,
+              status: result.activity.status || 'success',
+            });
+            
+            // Reload data
+            await loadSentinels();
+            await loadGlobalActivities();
+            
+            // Show toast if alert triggered
+            if (result.activity.triggered) {
+              showSuccessToast(
+                '🚨 Alert Triggered!', 
+                `Price ${sentinel.condition} ${sentinel.threshold.toLocaleString()}`
+              );
+            }
+          } else {
+            console.error('❌ Check failed:', result.error);
+            showErrorToast('Check Failed', result.error || 'Price check encountered an error');
+          }
+        } catch (error) {
+          console.error('❌ Monitoring error for sentinel', sentinel.id, ':', error);
+          // Don't show error toast for every failed check to avoid spam
+        }
+      };
+
+      // Run check immediately when monitoring starts
+      runCheck();
+      
+      // Then run every 30 seconds
+      const interval = setInterval(runCheck, 30000);
+      monitoringIntervalsRef.current.set(sentinel.id, interval);
+    });
+
+    // Cleanup on unmount or when sentinels change
+    return () => {
+      console.log('🛑 Cleaning up monitoring intervals');
+      monitoringIntervalsRef.current.forEach((interval, sentinelId) => {
+        console.log(`  Stopping monitoring for sentinel ${sentinelId}`);
+        clearInterval(interval);
+      });
+      monitoringIntervalsRef.current.clear();
+    };
+  }, [sentinels, user, loadSentinels, loadGlobalActivities]);
 
   const handleCreateSentinel = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -648,6 +748,21 @@ export default function DashboardPage() {
             <PriceDisplay
               threshold={activeSentinel?.threshold}
               condition={activeSentinel?.condition}
+            />
+          </motion.div>
+        )}
+
+        {/* Price Chart */}
+        {activeSentinel && !isSentinelsLoading && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            <PriceChart
+              sentinelId={activeSentinel.id}
+              threshold={activeSentinel.threshold}
+              condition={activeSentinel.condition}
             />
           </motion.div>
         )}
