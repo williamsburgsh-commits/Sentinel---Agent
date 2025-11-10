@@ -16,6 +16,7 @@ import {
   fetchUserActivities as fetchUserActivitiesDB,
   Sentinel,
   Activity,
+  SentinelConfig,
 } from '@/lib/database';
 import * as MockDB from '@/lib/mock-database';
 import { 
@@ -45,10 +46,10 @@ import { isMainnet, getNetworkDisplayInfo } from '@/lib/networks';
 // ==================== DATABASE WRAPPER FUNCTIONS ====================
 // These functions try Supabase first, then fall back to localStorage if it fails
 
-async function createSentinel(userId: string, config: any): Promise<Sentinel | null> {
+async function createSentinel(userId: string, config: SentinelConfig): Promise<Sentinel | null> {
   try {
     return await createSentinelDB(userId, config);
-  } catch (error) {
+  } catch (_error) {
     console.warn('⚠️  Supabase failed, using localStorage fallback');
     return await MockDB.createSentinel(userId, config);
   }
@@ -57,7 +58,7 @@ async function createSentinel(userId: string, config: any): Promise<Sentinel | n
 async function getSentinels(userId: string, network?: 'devnet' | 'mainnet'): Promise<Sentinel[]> {
   try {
     return await getSentinelsDB(userId, network);
-  } catch (error) {
+  } catch (_error) {
     console.warn('⚠️  Supabase failed, using localStorage fallback');
     return await MockDB.getSentinels(userId, network);
   }
@@ -66,7 +67,7 @@ async function getSentinels(userId: string, network?: 'devnet' | 'mainnet'): Pro
 async function updateSentinel(sentinelId: string, updates: Partial<Sentinel>): Promise<Sentinel | null> {
   try {
     return await updateSentinelDB(sentinelId, updates);
-  } catch (error) {
+  } catch (_error) {
     console.warn('⚠️  Supabase failed, using localStorage fallback');
     return await MockDB.updateSentinel(sentinelId, updates);
   }
@@ -75,16 +76,16 @@ async function updateSentinel(sentinelId: string, updates: Partial<Sentinel>): P
 async function deleteSentinel(sentinelId: string): Promise<boolean> {
   try {
     return await deleteSentinelFromDB(sentinelId);
-  } catch (error) {
+  } catch (_error) {
     console.warn('⚠️  Supabase failed, using localStorage fallback');
     return await MockDB.deleteSentinel(sentinelId);
   }
 }
 
-async function getActivityStats(userId?: string, sentinelId?: string): Promise<any> {
+async function getActivityStats(userId?: string, sentinelId?: string): Promise<{ total_checks: number; total_spent: number; last_check?: string }> {
   try {
     return await getActivityStatsDB(userId, sentinelId);
-  } catch (error) {
+  } catch (_error) {
     console.warn('⚠️  Supabase failed, using localStorage fallback');
     return await MockDB.getActivityStats(userId, sentinelId);
   }
@@ -93,7 +94,7 @@ async function getActivityStats(userId?: string, sentinelId?: string): Promise<a
 async function fetchUserActivities(userId: string, limit?: number): Promise<Activity[]> {
   try {
     return await fetchUserActivitiesDB(userId, limit);
-  } catch (error) {
+  } catch (_error) {
     console.warn('⚠️  Supabase failed, using localStorage fallback');
     return await MockDB.fetchUserActivities(userId, limit);
   }
