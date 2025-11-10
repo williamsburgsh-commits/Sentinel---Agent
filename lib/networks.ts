@@ -63,8 +63,8 @@ export const DEVNET_CONFIG: NetworkConfig = {
   
   tokens: {
     usdc: {
-      // Devnet USDC mint (test tokens)
-      mint: 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr',
+      // Devnet USDC mint (test tokens) - Official SPL Token Faucet USDC
+      mint: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
       decimals: 6,
       symbol: 'USDC',
     },

@@ -36,6 +36,7 @@ import DashboardStats from '@/components/DashboardStats';
 import GlobalActivityFeed from '@/components/GlobalActivityFeed';
 import AIInsights from '@/components/AIInsights';
 import PriceChart from '@/components/PriceChart';
+import WalletFundingSection from '@/components/WalletFundingSection';
 import { colors } from '@/lib/design-tokens';
 import { Keypair } from '@solana/web3.js';
 import bs58 from 'bs58';
@@ -93,6 +94,7 @@ export default function DashboardPage() {
   const [showMainnetModal, setShowMainnetModal] = useState(false);
   const [networkInfo, setNetworkInfo] = useState<ReturnType<typeof getNetworkDisplayInfo> | null>(null);
   const [createdWalletAddress, setCreatedWalletAddress] = useState<string | null>(null);
+  const [createdWalletPaymentMethod, setCreatedWalletPaymentMethod] = useState<'usdc' | 'cash'>('usdc');
 
   // Get network info on mount and log network configuration
   useEffect(() => {
@@ -344,6 +346,27 @@ export default function DashboardPage() {
             console.log('   Price:', result.activity.price, '(type:', typeof result.activity.price, ')');
             console.log('   Cost:', result.activity.cost, '(type:', typeof result.activity.cost, ')');
             console.log('   Triggered:', result.activity.triggered);
+            console.log('   Status:', result.activity.status);
+            
+            // Check if activity failed due to insufficient balance
+            if (result.activity.status === 'failed' && result.activity.errorMessage?.includes('Insufficient')) {
+              console.warn('⚠️ Insufficient balance detected - pausing sentinel');
+              
+              // Auto-pause the sentinel
+              await updateSentinel(sentinel.id, { is_active: false });
+              
+              // Show error notification
+              const tokenName = sentinel.payment_method === 'cash' ? 'CASH' : 'USDC';
+              showErrorToast(
+                '⚠️ Monitoring Paused - Insufficient Balance',
+                `Your wallet needs more ${tokenName} to continue monitoring. Please fund your wallet.`
+              );
+              
+              // Reload sentinels to reflect paused state
+              await loadSentinels();
+              await loadGlobalActivities();
+              return;
+            }
             
             // Save activity to localStorage
             const savedActivity = await createActivity(sentinel.id, user.id, {
@@ -371,7 +394,25 @@ export default function DashboardPage() {
             }
           } else {
             console.error('❌ Check failed:', result.error);
-            showErrorToast('Check Failed', result.error || 'Price check encountered an error');
+            
+            // Check if error is due to insufficient balance
+            if (result.error?.includes('Insufficient')) {
+              console.warn('⚠️ Insufficient balance error - pausing sentinel');
+              
+              // Auto-pause the sentinel
+              await updateSentinel(sentinel.id, { is_active: false });
+              
+              const tokenName = sentinel.payment_method === 'cash' ? 'CASH' : 'USDC';
+              showErrorToast(
+                '⚠️ Monitoring Paused - Insufficient Balance',
+                `Your wallet needs more ${tokenName} to continue monitoring. Please fund your wallet.`
+              );
+              
+              // Reload sentinels to reflect paused state
+              await loadSentinels();
+            } else {
+              showErrorToast('Check Failed', result.error || 'Price check encountered an error');
+            }
           }
         } catch (error) {
           console.error('❌ Monitoring error for sentinel', sentinel.id, ':', error);
@@ -469,14 +510,15 @@ export default function DashboardPage() {
       console.log('✅ Sentinel created successfully on', currentNetwork);
       console.log('🚀 =======================================');
 
-      // Store created wallet address to display to user
+      // Store created wallet address and payment method to display funding section
       setCreatedWalletAddress(walletAddress);
+      setCreatedWalletPaymentMethod(paymentMethod);
       
       // Show success animation
       setShowSuccessAnimation(true);
       showSuccessToast(
         'Sentinel Created!', 
-        `Monitoring SOL price ${condition} $${threshold.toLocaleString()} on ${currentNetwork.toUpperCase()}`
+        `Monitoring SOL price ${condition} ${threshold.toLocaleString()} on ${currentNetwork.toUpperCase()}`
       );
 
       // Reset form
@@ -509,10 +551,40 @@ export default function DashboardPage() {
 
   const handleResumeSentinel = async (sentinelId: string) => {
     try {
+      // Find the sentinel to check its balance
+      const sentinel = sentinels.find(s => s.id === sentinelId);
+      if (!sentinel) {
+        showErrorToast('Sentinel not found', 'Please refresh the page');
+        return;
+      }
+
+      // Check balance before resuming
+      const { PublicKey } = await import('@solana/web3.js');
+      const { getUSDCBalance, getCASHBalance } = await import('@/lib/payments');
+      
+      const walletPublicKey = new PublicKey(sentinel.wallet_address);
+      const minBalance = 0.0001; // Minimum balance for one check
+      
+      let tokenBalance: number;
+      if (sentinel.payment_method === 'cash') {
+        tokenBalance = await getCASHBalance(walletPublicKey);
+      } else {
+        tokenBalance = await getUSDCBalance(walletPublicKey);
+      }
+      
+      if (tokenBalance < minBalance) {
+        const tokenName = sentinel.payment_method === 'cash' ? 'CASH' : 'USDC';
+        showErrorToast(
+          'Insufficient Balance',
+          `Your wallet needs at least ${minBalance} ${tokenName} to start monitoring. Please fund your wallet first.`
+        );
+        return;
+      }
+
       // Deactivate all other sentinels first
-      for (const sentinel of sentinels) {
-        if (sentinel.id !== sentinelId && sentinel.is_active) {
-          await updateSentinel(sentinel.id, { is_active: false });
+      for (const s of sentinels) {
+        if (s.id !== sentinelId && s.is_active) {
+          await updateSentinel(s.id, { is_active: false });
         }
       }
 
@@ -694,41 +766,20 @@ export default function DashboardPage() {
           </motion.div>
         )}
 
-        {/* Wallet Funding Banner */}
+        {/* Wallet Funding Section */}
         {createdWalletAddress && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="p-6 bg-gradient-to-r from-green-600/20 to-blue-600/20 border-4 border-green-500 rounded-xl shadow-2xl shadow-green-500/20"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="text-3xl">💎</div>
-                  <p className="text-green-300 font-bold text-xl">
-                    Sentinel Wallet Created!
-                  </p>
-                </div>
-                <p className="text-white/90 mb-3 font-semibold">
-                  Fund this wallet with {paymentMethod.toUpperCase()} + SOL for transaction fees:
-                </p>
-                <div className="bg-black/30 p-4 rounded-lg border border-green-500/50">
-                  <p className="text-green-400 font-mono text-lg break-all">
-                    {createdWalletAddress}
-                  </p>
-                </div>
-                <p className="text-white/70 mt-3 text-sm">
-                  💡 Tip: You need ~0.01 SOL for transaction fees plus {paymentMethod.toUpperCase()} tokens for price checks
-                </p>
-              </div>
-              <button
-                onClick={() => setCreatedWalletAddress(null)}
-                className="ml-4 p-2 text-white/50 hover:text-white transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-          </motion.div>
+          <div className="relative">
+            <button
+              onClick={() => setCreatedWalletAddress(null)}
+              className="absolute top-4 right-4 z-10 p-2 rounded-lg bg-gray-800/80 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <WalletFundingSection
+              walletAddress={createdWalletAddress}
+              paymentMethod={createdWalletPaymentMethod}
+            />
+          </div>
         )}
 
         {/* Aggregate Statistics */}
