@@ -3,7 +3,7 @@ import { runSentinelCheck } from '@/lib/sentinel';
 import { getSOLPrice } from '@/lib/switchboard';
 import { SentinelConfig } from '@/types';
 import { analyzePatterns } from '@/lib/ai-analysis';
-import { saveAIAnalysis, getActivities, shouldRunAnalysis } from '@/lib/database';
+import { saveAIAnalysis, getActivities, shouldRunAnalysis } from '@/lib/data-store';
 import { sendDiscordAlert } from '@/lib/notifications';
 
 export async function GET() {

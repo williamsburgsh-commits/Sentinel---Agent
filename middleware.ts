@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
 
 // ⚠️ AUTH COMPLETELY DISABLED FOR TESTING ⚠️
-export async function middleware(req: NextRequest) {
+export async function middleware() {
   console.log('🔓 MIDDLEWARE: Auth check BYPASSED - allowing all routes');
   return NextResponse.next();
 }

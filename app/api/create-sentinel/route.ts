@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
   try {
     // Parse request body
     const body = await request.json();
-    const { threshold, condition, discordWebhook, paymentMethod = 'usdc', userId } = body;
+    const { threshold, condition, discordWebhook, paymentMethod = 'usdc', network = 'devnet', userId } = body;
 
     // Validate input
     if (typeof threshold !== 'number' || threshold <= 0) {
@@ -53,6 +53,7 @@ export async function POST(request: NextRequest) {
       condition,
       discordWebhook,
       paymentMethod, // Include payment method (defaults to 'usdc')
+      network, // Include network (defaults to 'devnet')
       isActive: true,
       createdAt: new Date(),
     };
