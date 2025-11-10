@@ -241,8 +241,10 @@ export default function DashboardPage() {
 
     setIsActivitiesLoading(true);
     try {
-      const activities = await fetchUserActivities(user.id, 20);
+      // Load ALL activities (no limit) to fix the 20-activity limit bug
+      const activities = await fetchUserActivities(user.id);
       setGlobalActivities(activities);
+      console.log(`📊 Loaded ${activities.length} activities from storage`);
     } catch (error) {
       console.error('Error loading activities:', error);
     } finally {
@@ -338,12 +340,13 @@ export default function DashboardPage() {
           
           if (result.success) {
             console.log('✅ Check completed successfully');
-            console.log('   Price:', result.activity.price);
-            console.log('   Cost:', result.activity.cost);
+            console.log('   Full activity object from API:', result.activity);
+            console.log('   Price:', result.activity.price, '(type:', typeof result.activity.price, ')');
+            console.log('   Cost:', result.activity.cost, '(type:', typeof result.activity.cost, ')');
             console.log('   Triggered:', result.activity.triggered);
             
             // Save activity to localStorage
-            await createActivity(sentinel.id, user.id, {
+            const savedActivity = await createActivity(sentinel.id, user.id, {
               price: result.activity.price,
               cost: result.activity.cost,
               settlement_time: result.activity.settlementTimeMs,
@@ -352,6 +355,8 @@ export default function DashboardPage() {
               triggered: result.activity.triggered,
               status: result.activity.status || 'success',
             });
+            
+            console.log('📝 Activity saved to localStorage:', savedActivity);
             
             // Reload data
             await loadSentinels();
