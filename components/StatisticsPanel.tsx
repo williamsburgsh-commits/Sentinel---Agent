@@ -9,13 +9,15 @@ interface StatisticsPanelProps {
 }
 
 export default function StatisticsPanel({ activities, currentSOLPrice = 200 }: StatisticsPanelProps) {
+  // Ensure activities is always an array to prevent filter errors
+  const safeActivities = activities || [];
   // Calculate statistics
-  const totalChecks = activities.length;
-  const totalAlerts = activities.filter(a => a.triggered).length;
+  const totalChecks = safeActivities.length;
+  const totalAlerts = safeActivities.filter(a => a.triggered).length;
   const averagePrice = totalChecks > 0
-    ? activities.reduce((sum, a) => sum + a.price, 0) / totalChecks
+    ? safeActivities.reduce((sum, a) => sum + a.price, 0) / totalChecks
     : 0;
-  const totalCostSOL = activities.reduce((sum, a) => sum + a.cost, 0);
+  const totalCostSOL = safeActivities.reduce((sum, a) => sum + a.cost, 0);
   const totalCostUSD = totalCostSOL * currentSOLPrice;
   
   // Calculate uptime (assuming all checks in activities were successful)

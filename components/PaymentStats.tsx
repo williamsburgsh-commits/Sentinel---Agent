@@ -19,8 +19,10 @@ interface PaymentMethodStats {
 export default function PaymentStats({ activities }: PaymentStatsProps) {
   // Calculate statistics for each payment method
   const stats = useMemo(() => {
-    const usdcActivities = activities.filter(a => a.paymentMethod === 'usdc' && a.status === 'success');
-    const cashActivities = activities.filter(a => a.paymentMethod === 'cash' && a.status === 'success');
+    // Ensure activities is always an array to prevent filter errors
+    const safeActivities = activities || [];
+    const usdcActivities = safeActivities.filter(a => a.paymentMethod === 'usdc' && a.status === 'success');
+    const cashActivities = safeActivities.filter(a => a.paymentMethod === 'cash' && a.status === 'success');
 
     const calculateStats = (acts: SentinelActivity[]): PaymentMethodStats => {
       if (acts.length === 0) {

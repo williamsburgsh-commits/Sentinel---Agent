@@ -13,6 +13,7 @@ import {
   deleteSentinel,
   getActivityStats,
   fetchUserActivities,
+  createActivity,
 } from '@/lib/data-store';
 import type { Sentinel, Activity, ActivityStats } from '@/types/data';
 import { 
