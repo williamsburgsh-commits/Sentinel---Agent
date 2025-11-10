@@ -1,10 +1,8 @@
 import {
-  Connection,
   Keypair,
   PublicKey,
   Transaction,
   sendAndConfirmTransaction,
-  clusterApiUrl,
 } from '@solana/web3.js';
 import {
   getOrCreateAssociatedTokenAccount,
