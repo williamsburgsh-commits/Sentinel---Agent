@@ -82,6 +82,11 @@ export async function createSentinel(
 ): Promise<Sentinel | null> {
   const supabase = createBrowserClient();
   
+  // If Supabase is not available, throw error to trigger localStorage fallback
+  if (!supabase) {
+    throw new Error('Supabase not available');
+  }
+  
   try {
     // First, deactivate all existing sentinels for this user on this network
     await deactivateAllSentinels(userId, config.network);
@@ -141,6 +146,11 @@ export async function saveSentinel(sentinel: SentinelInsert): Promise<Sentinel |
 export async function getSentinels(userId: string, network?: 'devnet' | 'mainnet'): Promise<Sentinel[]> {
   const supabase = createBrowserClient();
   
+  // If Supabase is not available, throw error to trigger localStorage fallback
+  if (!supabase) {
+    throw new Error('Supabase not available');
+  }
+  
   try {
     let query = supabase
       .from('sentinels')
@@ -163,7 +173,7 @@ export async function getSentinels(userId: string, network?: 'devnet' | 'mainnet
     return data || [];
   } catch (error) {
     console.error('Error fetching sentinels:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -232,6 +242,11 @@ export async function updateSentinel(
 ): Promise<Sentinel | null> {
   const supabase = createBrowserClient();
   
+  // If Supabase is not available, throw error to trigger localStorage fallback
+  if (!supabase) {
+    throw new Error('Supabase not available');
+  }
+  
   try {
     // @ts-expect-error - Supabase type inference issue
     const { data, error } = await supabase
@@ -268,6 +283,11 @@ export async function deleteSentinel(sentinelId: string): Promise<boolean> {
 
 export async function deactivateAllSentinels(userId: string, network?: 'devnet' | 'mainnet'): Promise<boolean> {
   const supabase = createBrowserClient();
+  
+  // If Supabase is not available, throw error to trigger localStorage fallback
+  if (!supabase) {
+    throw new Error('Supabase not available');
+  }
   
   try {
     let query = supabase
@@ -407,6 +427,11 @@ export async function fetchSentinelActivities(sentinelId: string): Promise<Activ
 export async function fetchUserActivities(userId: string, limit?: number): Promise<Activity[]> {
   const supabase = createBrowserClient();
   
+  // If Supabase is not available, throw error to trigger localStorage fallback
+  if (!supabase) {
+    throw new Error('Supabase not available');
+  }
+  
   try {
     let query = supabase
       .from('activities')
@@ -424,7 +449,7 @@ export async function fetchUserActivities(userId: string, limit?: number): Promi
     return data || [];
   } catch (error) {
     console.error('Error fetching user activities:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -441,7 +466,12 @@ export async function getActivityStats(
 }> {
   const supabase = createBrowserClient();
   
-  try {
+  // If Supabase is not available, throw error to trigger localStorage fallback
+  if (!supabase) {
+    throw new Error('Supabase not available');
+  }
+  
+  try{
     let query = supabase
       .from('activities')
       .select('cost, triggered, status, created_at');
@@ -474,13 +504,7 @@ export async function getActivityStats(
     };
   } catch (error) {
     console.error('Error fetching activity stats:', error);
-    return {
-      total_checks: 0,
-      total_spent: 0,
-      alerts_triggered: 0,
-      success_rate: 0,
-      avg_cost: 0,
-    };
+    throw error;
   }
 }
 

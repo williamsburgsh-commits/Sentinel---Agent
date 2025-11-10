@@ -150,6 +150,7 @@ export default function DashboardPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showMainnetModal, setShowMainnetModal] = useState(false);
   const [networkInfo, setNetworkInfo] = useState<ReturnType<typeof getNetworkDisplayInfo> | null>(null);
+  const [createdWalletAddress, setCreatedWalletAddress] = useState<string | null>(null);
 
   // Get network info on mount and log network configuration
   useEffect(() => {
@@ -421,6 +422,9 @@ export default function DashboardPage() {
       console.log('✅ Sentinel created successfully on', currentNetwork);
       console.log('🚀 =======================================');
 
+      // Store created wallet address to display to user
+      setCreatedWalletAddress(walletAddress);
+      
       // Show success animation
       setShowSuccessAnimation(true);
       showSuccessToast(
@@ -626,11 +630,57 @@ export default function DashboardPage() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-4 bg-red-500/10 border-2 border-red-500/30 rounded-lg"
+            className="p-6 bg-gradient-to-r from-red-600/20 to-orange-600/20 border-4 border-red-500 rounded-xl shadow-2xl shadow-red-500/20"
           >
-            <p className="text-red-400 font-semibold text-center">
-              ⚠️ MAINNET MODE ACTIVE - Real funds will be used for all transactions!
-            </p>
+            <div className="flex items-center justify-center gap-4">
+              <div className="text-5xl animate-pulse">🚨</div>
+              <div className="text-center">
+                <p className="text-red-300 font-black text-2xl mb-1">
+                  ⚠️ MAINNET MODE ACTIVE ⚠️
+                </p>
+                <p className="text-red-200 font-bold text-lg">
+                  Real funds will be used for all transactions!
+                </p>
+              </div>
+              <div className="text-5xl animate-pulse">🚨</div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Wallet Funding Banner */}
+        {createdWalletAddress && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-6 bg-gradient-to-r from-green-600/20 to-blue-600/20 border-4 border-green-500 rounded-xl shadow-2xl shadow-green-500/20"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="text-3xl">💎</div>
+                  <p className="text-green-300 font-bold text-xl">
+                    Sentinel Wallet Created!
+                  </p>
+                </div>
+                <p className="text-white/90 mb-3 font-semibold">
+                  Fund this wallet with {paymentMethod.toUpperCase()} + SOL for transaction fees:
+                </p>
+                <div className="bg-black/30 p-4 rounded-lg border border-green-500/50">
+                  <p className="text-green-400 font-mono text-lg break-all">
+                    {createdWalletAddress}
+                  </p>
+                </div>
+                <p className="text-white/70 mt-3 text-sm">
+                  💡 Tip: You need ~0.01 SOL for transaction fees plus {paymentMethod.toUpperCase()} tokens for price checks
+                </p>
+              </div>
+              <button
+                onClick={() => setCreatedWalletAddress(null)}
+                className="ml-4 p-2 text-white/50 hover:text-white transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
           </motion.div>
         )}
 
