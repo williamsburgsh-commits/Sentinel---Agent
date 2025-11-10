@@ -46,8 +46,10 @@ export default function PriceChart({ activities }: PriceChartProps) {
         cutoffDate = subHours(now, 24);
     }
 
+    // Ensure activities is always an array to prevent filter errors
+    const safeActivities = activities || [];
     // Filter activities within time range and sort by timestamp
-    const filteredActivities = activities
+    const filteredActivities = safeActivities
       .filter(activity => isAfter(new Date(activity.timestamp), cutoffDate))
       .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
