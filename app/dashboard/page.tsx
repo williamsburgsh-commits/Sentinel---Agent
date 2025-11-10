@@ -101,18 +101,33 @@ export default function DashboardPage() {
   // Check authentication
   useEffect(() => {
     const checkAuth = async () => {
+      console.log('🔐 Starting auth check...');
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        // Add timeout to prevent infinite loading
+        const timeoutPromise = new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Auth timeout')), 10000)
+        );
+        
+        const authPromise = supabase.auth.getSession();
+        
+        const result = await Promise.race([authPromise, timeoutPromise]);
+        const { data: { session } } = result;
+        
+        console.log('🔐 Auth check complete. Session:', session ? 'Found' : 'Not found');
         
         if (!session) {
+          console.log('❌ No session, redirecting to login...');
+          setIsAuthLoading(false);
           router.push('/auth/login');
           return;
         }
 
+        console.log('✅ User authenticated:', session.user.email);
         setUser(session.user);
         setIsAuthLoading(false);
       } catch (error) {
-        console.error('Auth error:', error);
+        console.error('❌ Auth error:', error);
+        setIsAuthLoading(false); // CRITICAL: Set loading to false on error
         router.push('/auth/login');
       }
     };

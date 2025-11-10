@@ -16,20 +16,40 @@ export default function PriceDisplay({ threshold, condition }: PriceDisplayProps
   const [error, setError] = useState<string | null>(null);
 
   const fetchPrice = async () => {
+    console.log('💰 Fetching SOL price...');
     try {
       setError(null);
-      const response = await fetch('/api/check-price');
+      
+      // Add timeout to prevent infinite loading
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+      
+      const response = await fetch('/api/check-price', {
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      
       const data = await response.json();
+      console.log('💰 Price fetch response:', data);
 
       if (data.success && data.price) {
+        console.log('✅ Price loaded:', data.price);
         setPrice(data.price);
         setLastUpdated(new Date());
       } else {
+        console.error('❌ Price fetch failed:', data);
         setError('Failed to fetch price');
       }
     } catch (err) {
-      console.error('Error fetching price:', err);
-      setError('Error fetching price');
+      console.error('❌ Error fetching price:', err);
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError('Request timed out. Retrying...');
+        // Auto-retry once after timeout
+        setTimeout(() => fetchPrice(), 2000);
+      } else {
+        setError('Error fetching price');
+      }
     } finally {
       setIsLoading(false);
     }
