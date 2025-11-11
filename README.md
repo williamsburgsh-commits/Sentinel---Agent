@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🛡️ Sentinel
 
-## Getting Started
+**Autonomous On-Chain Monitors, Powered by Micropayments**
 
-First, run the development server:
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Built with Next.js](https://img.shields.io/badge/Built%20with-Next.js-000000.svg)](https://nextjs.org/)
+[![Solana](https://img.shields.io/badge/Solana-14F195?style=flat&logo=solana&logoColor=white)](https://solana.com/)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🌟 Overview
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Sentinel is a next-generation monitoring system that brings autonomous, decentralized monitoring to the Solana blockchain. By leveraging CASH micropayments and the x402 protocol, Sentinel creates a sustainable ecosystem where users can deploy autonomous agents to monitor on-chain activity, with payments automatically processed for successful alerts and verifications.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🚀 Key Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Autonomous Monitoring Agents** - Deploy self-executing monitors that watch for specific on-chain conditions
+- **CASH Micropayments** - Pay-per-alert model using Solana's CASH token for efficient microtransactions
+- **x402 Protocol** - Secure and transparent payment channels for monitoring services
+- **Switchboard Oracles** - Reliable off-chain data feeds for complex monitoring conditions
+- **AI-Powered Analysis** - Advanced pattern recognition and anomaly detection using Anthropic Claude
+- **CDP Embedded Wallets** - Seamless user onboarding with non-custodial wallet integration
 
-## Learn More
+## 🛠 Tech Stack
 
-To learn more about Next.js, take a look at the following resources:
+- **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS
+- **Blockchain**: Solana, Phantom CASH, x402 Protocol
+- **Oracles**: Switchboard
+- **AI**: Anthropic Claude
+- **Authentication**: CDP Embedded Wallets
+- **Database**: Supabase
+- **Deployment**: Vercel
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🚀 Quick Start
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/williamsburgsh-commits/Sentinel---Agent.git
+   cd Sentinel---Agent
+   ```
 
-## Deploy on Vercel
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+3. **Set up environment variables**
+   Copy `.env.example` to `.env.local` and fill in the required values:
+   ```bash
+   cp .env.example .env.local
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+4. **Run the development server**
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   ```
+
+5. **Open [http://localhost:3000](http://localhost:3000) in your browser**
+
+## 📚 Documentation
+
+For detailed setup instructions, configuration options, and API documentation, please refer to our [SETUP.md](./SETUP.md) file.
+
+## 🏆 Hackathon Submission
+
+This project was built for [Hackathon Name] and competes in the following prize categories:
+- [ ] Best Use of Solana
+- [ ] Best Use of x402 Protocol
+- [ ] Best Use of AI/ML
+- [ ] Best DeFi Application
+- [ ] Best User Experience
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Solana Foundation for their developer tools and documentation
+- The x402 Protocol team for their innovative micropayment solutions
+- The Switchboard team for reliable oracle services
+- Anthropic for their powerful AI models
+- The entire web3 community for inspiration and support
