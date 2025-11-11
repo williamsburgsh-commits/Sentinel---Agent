@@ -65,12 +65,13 @@ For detailed setup instructions, configuration options, and API documentation, p
 
 ## 🏆 Hackathon Submission
 
-This project was built for [Hackathon Name] and competes in the following prize categories:
-- [ ] Best Use of Solana
-- [ ] Best Use of x402 Protocol
-- [ ] Best Use of AI/ML
-- [ ] Best DeFi Application
-- [ ] Best User Experience
+Sentinel is purpose-built to compete and excel in this hackathon's key categories:
+Best x402 Agent Application
+Best Trustless Agent 
+Best Use of CASH
+Dark Research Prize 
+Best Use of Switchboard 
+Best AgentPay Demo 
 
 ## 🤝 Contributing
 
