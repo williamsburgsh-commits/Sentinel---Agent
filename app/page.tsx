@@ -798,7 +798,7 @@ export default function Home() {
         {/* Footer */}
         <footer className="py-12 px-4 sm:px-6 lg:px-8 border-t" style={{ borderColor: colors.border.light }}>
           <div className="max-w-7xl mx-auto text-center text-gray-500 text-sm">
-            <p>© 2024 Sentinel. Built on Solana with ❤️</p>
+            <p>© 2025 Sentinel. Built on Solana with ❤️</p>
           </div>
         </footer>
       </div>
