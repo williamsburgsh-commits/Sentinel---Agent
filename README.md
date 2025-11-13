@@ -5,7 +5,7 @@
 [![Built with Next.js](https://img.shields.io/badge/Built%20with-Next.js-000000.svg)](https://nextjs.org/)
 [![Solana](https://img.shields.io/badge/Solana-14F195?style=flat&logo=solana&logoColor=white)](https://solana.com/)
 
-> 🎥 **Gitbook** | 🌐 **https://app.gitbook.com/o/NkcSMFHgRejbZkjuqxdr/s/IF6BM4S1ZOicDaWmAAsr/**
+> 🎥 **Gitbook** | 🌐 **https://sentinelagent.gitbook.io/sentinel-agent/**
 
 ## 🌟 Overview
 
