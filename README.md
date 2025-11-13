@@ -1,36 +1,114 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🔍 Sentinel - Autonomous On-Chain Monitors
 
-## Getting Started
+> **Micropowered Intelligence for the Decentralized Web**
 
-First, run the development server:
+Sentinel is a decentralized monitoring platform that leverages the x402 protocol for micropayments, enabling autonomous, self-funding on-chain monitoring agents. Monitor any on-chain condition, get real-time alerts, and execute actions - all powered by secure, trustless smart contracts.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## ✨ Features
+
+- **🚀 Autonomous Agents**: Self-funding sentinels that monitor on-chain conditions 24/7
+- **💸 Micropayments**: Pay-per-use model using the x402 protocol for efficient resource allocation
+- **🔔 Real-time Alerts**: Get instant notifications via Discord when conditions are met
+- **📊 Price Monitoring**: Track asset prices with sub-second precision using Switchboard oracles
+- **🤖 AI-Powered Analysis**: Optional AI-driven market insights and trend analysis
+- **🔒 Non-Custodial**: Your keys, your funds - fully self-sovereign operation
+
+## 🛠 Tech Stack
+
+- **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS
+- **Blockchain**: Solana, x402 Protocol, Switchboard Oracles
+- **AI**: DeepSeek API for market analysis
+- **Infra**: Vercel, Helius RPC
+- **Notifications**: Discord Webhooks
+
+## 🚀 Quick Start
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/sentinel-agent.git
+   cd sentinel-agent
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
+
+3. **Set up environment variables**
+   Copy `.env.example` to `.env.local` and fill in your API keys:
+   ```env
+   # Required
+   COINMARKETCAP_API_KEY=your_coinmarketcap_api_key
+   
+   # Optional (for production)
+   DEEPSEEK_API_KEY=your_deepseek_api_key
+   DISCORD_WEBHOOK_URL=your_discord_webhook_url
+   ```
+
+4. **Run the development server**
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   ```
+
+5. **Open [http://localhost:3000](http://localhost:3000)** to view it in your browser
+
+## 🏗 How It Works
+
+1. **Deploy**: Create a new sentinel with your monitoring parameters
+2. **Fund**: Deposit USDC or CASH tokens to fund the sentinel's operations
+3. **Monitor**: The sentinel continuously checks the specified conditions
+4. **Alert**: When conditions are met, you receive an instant notification
+5. **Renew**: Sentinels automatically renew using micropayments from successful alerts
+
+## 🏛 Architecture
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Frontend      │    │   API Routes    │    │   Blockchain    │
+│   (Next.js)     │◄──►│   (Next.js)     │◄──►│   (Solana)      │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         ▲                      ▲                      ▲
+         │                      │                      │
+         ▼                      ▼                      ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   User          │    │   Price Feeds   │    │   x402 Protocol │
+│   Interface     │    │   (Switchboard) │    │   (Micropayments)│
+└─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🎥 Demo
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+[![Watch the demo](https://img.youtube.com/vi/YOUR_VIDEO_ID/maxresdefault.jpg)](https://youtu.be/YOUR_VIDEO_ID)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🗺 Roadmap
 
-## Learn More
+### Phase 1: Core Monitoring (Current)
+- [x] Price monitoring for Solana tokens
+- [x] Discord notifications
+- [x] Self-funding sentinels
 
-To learn more about Next.js, take a look at the following resources:
+### Phase 2: Enhanced Features
+- [ ] Wallet Activity Sentinel
+- [ ] DeFi Position Monitoring
+- [ ] NFT Floor Price Alerts
+- [ ] Cross-chain Monitoring
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Phase 3: Advanced Capabilities
+- [ ] AI-Powered Market Analysis
+- [ ] Automated Strategy Execution
+- [ ] Multi-signature Approvals
+- [ ] DAO Governance
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📄 License
 
-## Deploy on Vercel
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🙏 Acknowledgments
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Built with ❤️ using Next.js and Solana
+- Special thanks to the x402 protocol team for their innovative micropayments solution
+- Inspired by the need for decentralized, trustless monitoring in DeFi

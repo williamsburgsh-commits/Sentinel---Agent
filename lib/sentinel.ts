@@ -76,11 +76,33 @@ export async function runSentinelCheck(config: SentinelConfig): Promise<Sentinel
     const paymentStartTime = Date.now();
     
     if (paymentMethod === 'cash') {
-      transactionSignature = await sendCASHPayment(
-        sentinelKeypair,
-        oracleAddress,
-        PRICE_CHECK_COST
-      );
+      try {
+        console.log('💸 Attempting CASH payment...');
+        console.log('   - From:', sentinelKeypair.publicKey.toBase58());
+        console.log('   - To:', oracleAddress.toBase58());
+        console.log('   - Amount:', PRICE_CHECK_COST, 'CASH');
+        
+        // Additional check for CASH balance with detailed logging
+        const cashBalance = await getCASHBalance(sentinelKeypair.publicKey);
+        console.log('💰 Current CASH balance:', cashBalance, 'CASH');
+        
+        if (cashBalance < PRICE_CHECK_COST) {
+          throw new Error(`Insufficient CASH balance. Required: ${PRICE_CHECK_COST} CASH, Available: ${cashBalance} CASH`);
+        }
+        
+        transactionSignature = await sendCASHPayment(
+          sentinelKeypair,
+          oracleAddress,
+          PRICE_CHECK_COST
+        );
+      } catch (cashError) {
+        console.error('❌ CASH Payment Error:', cashError);
+        if (cashError instanceof Error) {
+          // Enhance the error with more context
+          throw new Error(`CASH payment failed: ${cashError.message}`);
+        }
+        throw new Error('CASH payment failed: Unknown error');
+      }
     } else {
       transactionSignature = await sendUSDCPayment(
         sentinelKeypair,

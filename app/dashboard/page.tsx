@@ -175,9 +175,14 @@ export default function DashboardPage() {
       setCreatedWalletAddress(walletAddress);
       setCreatedWalletPaymentMethod(paymentMethod);
 
-      showSuccessToast('Sentinel created successfully!', 'Fund the wallet to start monitoring');
+      // Show private key in success message
+      showSuccessToast(
+        'Sentinel created successfully!', 
+        `Private Key (SAVE THIS!): ${privateKey}\nWallet Address: ${walletAddress}`
+      );
       
       console.log('🔄 Reloading sentinels after creation...');
+      console.log('🔑 New wallet private key:', privateKey);
       await loadSentinels();
     } catch (error) {
       console.error('Error creating sentinel:', error);

@@ -11,9 +11,14 @@ const toastConfig = {
     color: colors.neutral[100],
     border: `1px solid ${colors.border.light}`,
     borderRadius: '12px',
-    padding: '16px',
+    padding: '12px',
     boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
     backdropFilter: 'blur(12px)',
+    maxWidth: 'calc(100vw - 32px)', // Ensure toast doesn't exceed screen width
+    width: 'auto',
+    minWidth: '300px',
+    maxHeight: '90vh', // Prevent toast from being too tall
+    overflow: 'auto', // Add scroll if content is too long
   },
 };
 
@@ -97,7 +102,14 @@ export const showWarningToast = (message: string, description?: string) => {
       <div
         className={`${
           t.visible ? 'animate-enter' : 'animate-leave'
-        } max-w-md w-full bg-gray-800 shadow-lg rounded-xl pointer-events-auto flex ring-1 ring-black ring-opacity-5 border border-yellow-700/30`}
+        } w-full bg-gray-800 shadow-lg rounded-xl pointer-events-auto flex ring-1 ring-black ring-opacity-5 border border-yellow-700/30`}
+        style={{
+          maxWidth: 'calc(100vw - 32px)',
+          width: 'auto',
+          minWidth: '300px',
+          maxHeight: '90vh',
+          overflow: 'auto'
+        }}
       >
         <div className="flex-1 w-0 p-4">
           <div className="flex items-start">

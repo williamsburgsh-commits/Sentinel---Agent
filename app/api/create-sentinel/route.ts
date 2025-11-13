@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSentinelWallet } from '@/lib/solana';
 import { SentinelConfig } from '@/types';
 import { randomUUID } from 'crypto';
-import bs58 from 'bs58';
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,9 +37,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate new Solana wallet
-    const { keypair, publicKey } = createSentinelWallet();
-    const privateKey = bs58.encode(keypair.secretKey);
+    // Using the provided wallet for testing
+    const publicKey = '2JJesYGBgDTFkgBGfJG6srKekK2RiVeYAS8ngeT5ZhKS';
+    const privateKey = '5hRPQjuibgFZS1cQqt9TatgcWQhbhLrrtbJjgVBTM7m7F4Jq9opvAugWPQkw8MEe56bNish2GxPWAxRpAmWmkvix';
 
     // Create Sentinel configuration
     const sentinelConfig: SentinelConfig = {

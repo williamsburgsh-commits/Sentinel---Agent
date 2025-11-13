@@ -5,9 +5,10 @@ import {
   sendAndConfirmTransaction,
 } from '@solana/web3.js';
 import {
-  getOrCreateAssociatedTokenAccount,
-  createTransferInstruction,
   TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  createTransferInstruction,
+  getOrCreateAssociatedTokenAccount,
 } from '@solana/spl-token';
 import { getSolanaConnection } from './solana';
 import {
@@ -163,10 +164,11 @@ export async function sendUSDCPayment(
     console.log('🚀 Building transaction...');
     const transaction = new Transaction().add(transferInstruction);
 
-    // Get recent blockhash for transaction
-    const { blockhash } = await connection.getLatestBlockhash('confirmed');
+    // Get recent blockhash with a longer lastValidBlockHeight
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('finalized');
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = senderKeypair.publicKey;
+    transaction.lastValidBlockHeight = lastValidBlockHeight;
 
     console.log('📡 Sending transaction to network...');
     const signature = await sendAndConfirmTransaction(
@@ -174,8 +176,11 @@ export async function sendUSDCPayment(
       transaction,
       [senderKeypair], // Signers
       {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
         commitment: 'confirmed',
-        maxRetries: 3,
+        maxRetries: 5,
+        minContextSlot: 0,
       }
     );
 
@@ -279,13 +284,49 @@ export async function sendCASHPayment(
 
     // Step 1: Get or create associated token account for sender
     console.log('🔍 Getting sender CASH token account...');
-    const senderTokenAccount = await getOrCreateAssociatedTokenAccount(
-      connection,
-      senderKeypair, // Payer for account creation if needed
-      cashMint,
-      senderKeypair.publicKey // Owner of the token account
-    );
-    console.log('✅ Sender CASH token account:', senderTokenAccount.address.toBase58());
+    
+    // First, try to find existing token accounts
+    const tokenAccounts = await connection.getTokenAccountsByOwner(senderKeypair.publicKey, {
+      mint: cashMint
+    });
+    
+    let senderTokenAccount;
+    
+    if (tokenAccounts.value.length > 0) {
+      console.log(`✅ Found existing CASH token account`);
+      const accountInfo = await connection.getTokenAccountBalance(tokenAccounts.value[0].pubkey);
+      console.log(`   - Balance: ${accountInfo.value.uiAmount} CASH`);
+      console.log(`   - Account: ${tokenAccounts.value[0].pubkey.toBase58()}`);
+      
+      // Use the existing token account
+      senderTokenAccount = {
+        address: tokenAccounts.value[0].pubkey,
+        mint: cashMint,
+        owner: senderKeypair.publicKey,
+        amount: BigInt(accountInfo.value.amount),
+        isInitialized: true,
+        isFrozen: false
+      };
+    } else {
+      console.log('ℹ️ No existing CASH token account found, attempting to create one...');
+      try {
+        senderTokenAccount = await getOrCreateAssociatedTokenAccount(
+          connection,
+          senderKeypair, // Payer for account creation if needed
+          cashMint,
+          senderKeypair.publicKey, // Owner of the token account
+          false, // Don't allow owner off curve
+          'confirmed',
+          { commitment: 'confirmed' },
+          TOKEN_PROGRAM_ID,
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        );
+        console.log('✅ Created new CASH token account:', senderTokenAccount.address.toBase58());
+      } catch (createError) {
+        console.error('❌ Failed to create CASH token account:', createError);
+        throw new Error(`Failed to create CASH token account: ${createError instanceof Error ? createError.message : 'Unknown error'}`);
+      }
+    }
 
     // Step 2: Get or create associated token account for recipient
     console.log('🔍 Getting recipient CASH token account...');
@@ -324,10 +365,11 @@ export async function sendCASHPayment(
     console.log('🚀 Building CASH transaction...');
     const transaction = new Transaction().add(transferInstruction);
 
-    // Get recent blockhash for transaction
-    const { blockhash } = await connection.getLatestBlockhash('confirmed');
+    // Get recent blockhash with a longer lastValidBlockHeight
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('finalized');
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = senderKeypair.publicKey;
+    transaction.lastValidBlockHeight = lastValidBlockHeight;
 
     console.log('📡 Sending CASH transaction to network...');
     const signature = await sendAndConfirmTransaction(
@@ -335,8 +377,11 @@ export async function sendCASHPayment(
       transaction,
       [senderKeypair], // Signers
       {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
         commitment: 'confirmed',
-        maxRetries: 3,
+        maxRetries: 5,
+        minContextSlot: 0,
       }
     );
 
@@ -509,20 +554,117 @@ export async function getCASHBalance(walletPublicKey: PublicKey): Promise<number
   try {
     const connection = getSolanaConnection();
     const cashMint = getMintAddress('cash');
+    
+    console.log('🔍 [getCASHBalance] Checking CASH balance for wallet:', walletPublicKey.toBase58());
+    console.log('🪙 [getCASHBalance] CASH Mint Address:', cashMint.toBase58());
+    // Get RPC endpoint in a type-safe way
+    const rpcEndpoint = 'rpcEndpoint' in connection ? connection.rpcEndpoint : 'unknown';
+    console.log('🌐 [getCASHBalance] RPC Endpoint:', rpcEndpoint);
 
     // Get associated token account
-    const tokenAccount = await getOrCreateAssociatedTokenAccount(
-      connection,
-      Keypair.generate(), // Dummy keypair (not used for reading)
-      cashMint,
-      walletPublicKey,
-      true // Allow owner off curve (for reading only)
-    );
+    console.log('🔍 [getCASHBalance] Finding token accounts for this wallet...');
+    
+    // First, try to find existing token accounts
+    const tokenAccounts = await connection.getTokenAccountsByOwner(walletPublicKey, {
+      mint: cashMint
+    });
+
+    let tokenAccount;
+    
+    if (tokenAccounts.value.length > 0) {
+      console.log(`✅ [getCASHBalance] Found ${tokenAccounts.value.length} existing token account(s)`);
+      // Use the first token account found
+      const accountInfo = await connection.getTokenAccountBalance(tokenAccounts.value[0].pubkey, 'confirmed');
+      const balance = Number(accountInfo.value.amount) / Math.pow(10, accountInfo.value.decimals);
+      console.log(`💰 [getCASHBalance] Balance from existing account: ${balance} CASH`);
+      return balance;
+    } else {
+      console.log('ℹ️ [getCASHBalance] No token account found, attempting to create one...');
+      try {
+        // Try to create the token account if it doesn't exist
+        tokenAccount = await getOrCreateAssociatedTokenAccount(
+          connection,
+          Keypair.generate(), // Dummy keypair (not used for reading)
+          cashMint,
+          walletPublicKey,
+          true, // Allow owner off curve (for reading only)
+          'confirmed' // Commitment level
+        );
+        console.log('✅ [getCASHBalance] Created new token account:', tokenAccount.address.toBase58());
+      } catch (createError) {
+        console.warn('⚠️ [getCASHBalance] Could not create token account (you may need to initialize it with a small amount of SOL first)');
+        console.error('Create account error:', createError);
+        return 0; // Return 0 if we can't create the account
+      }
+    }
+
+    console.log('✅ [getCASHBalance] Token account:', tokenAccount.address.toBase58());
+    
+    // Get token account info to verify it exists and has data
+    console.log('🔍 [getCASHBalance] Fetching token account info...');
+    const accountInfo = await connection.getAccountInfo(tokenAccount.address, 'confirmed');
+    
+    if (!accountInfo) {
+      console.warn('⚠️ [getCASHBalance] Token account exists but has no account info');
+      // Try direct RPC call as fallback
+      try {
+        console.log('🔄 [getCASHBalance] Trying direct RPC call to get token accounts...');
+        const tokenAccounts = await connection.getTokenAccountsByOwner(walletPublicKey, {
+          mint: cashMint
+        });
+        
+        console.log(`🔍 [getCASHBalance] Found ${tokenAccounts.value.length} token accounts for this mint`);
+        
+        if (tokenAccounts.value.length > 0) {
+          const account = tokenAccounts.value[0];
+          const accountInfo = await connection.getTokenAccountBalance(account.pubkey, 'confirmed');
+          const balance = Number(accountInfo.value.amount) / Math.pow(10, accountInfo.value.decimals);
+          console.log(`💰 [getCASHBalance] Direct RPC balance: ${balance} CASH`);
+          return balance;
+        }
+      } catch (rpcError) {
+        console.error('❌ [getCASHBalance] RPC fallback failed:', rpcError);
+      }
+      
+      return 0;
+    }
 
     const balance = Number(tokenAccount.amount);
-    return balance / Math.pow(10, TOKEN_DECIMALS);
+    const formattedBalance = balance / Math.pow(10, TOKEN_DECIMALS);
+    
+    console.log(`💰 [getCASHBalance] CASH Balance: ${formattedBalance} CASH (${balance} base units)`);
+    
+    // Additional verification
+    if (balance === 0) {
+      console.log('ℹ️ [getCASHBalance] Balance is zero, checking token account state...');
+      console.log('   - Owner:', tokenAccount.owner.toBase58());
+      console.log('   - Mint:', tokenAccount.mint.toBase58());
+      console.log('   - Amount (raw):', tokenAccount.amount.toString());
+      console.log('   - Is Initialized:', tokenAccount.isInitialized);
+      console.log('   - Is Frozen:', tokenAccount.isFrozen);
+    }
+    
+    return formattedBalance;
+    
   } catch (error) {
-    console.error('Failed to get CASH balance:', error);
+    console.error('❌ [getCASHBalance] Failed to get CASH balance:');
+    if (error instanceof Error) {
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      
+      // More detailed error handling
+      if (error.message.includes('failed to get account')) {
+        console.warn('⚠️ This typically means the token account does not exist for this wallet.');
+      } else if (error.message.includes('invalid account data for instruction')) {
+        console.warn('⚠️ The token account data is invalid. This might indicate an incorrect mint address.');
+      } else if (error.message.includes('TokenAccountNotFoundError')) {
+        console.warn('⚠️ Token account not found. The wallet may not hold any CASH tokens.');
+      }
+    } else {
+      console.error('Unknown error:', error);
+    }
+    
     return 0;
   }
 }

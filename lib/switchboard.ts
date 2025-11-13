@@ -3,55 +3,65 @@ import { PublicKey } from '@solana/web3.js';
 import { getSolanaConnection } from './solana';
 import { getCurrentNetwork } from './networks';
 
+// CoinMarketCap API configuration
+const COINMARKETCAP_API_KEY = process.env.COINMARKETCAP_API_KEY;
+const COINMARKETCAP_API_URL = 'https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest';
+
 /**
- * Get the current SOL/USD price from CoinGecko API
+ * Get the current SOL/USD price from CoinMarketCap API
  * @returns The current SOL price in USD
  */
 export async function getSOLPrice(): Promise<number> {
-  try {
-    // Try CoinGecko API first (free, no API key needed) with timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout (reduced)
-    
+  // First try CoinMarketCap if API key is available
+  if (COINMARKETCAP_API_KEY) {
     try {
+      console.log('🔍 Fetching SOL price from CoinMarketCap...');
       const response = await fetch(
-        'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd',
+        `${COINMARKETCAP_API_URL}?symbol=SOL&convert=USD`,
         {
           headers: {
+            'X-CMC_PRO_API_KEY': COINMARKETCAP_API_KEY,
             'Accept': 'application/json',
+            'Accept-Encoding': 'deflate, gzip',
           },
-          cache: 'no-store', // Disable caching to avoid issues
-          signal: controller.signal,
+          cache: 'no-store',
+          signal: AbortSignal.timeout(5000), // 5 second timeout
         }
       );
-      
-      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
-        if (data.solana && data.solana.usd) {
-          console.log('✅ SOL price from CoinGecko:', data.solana.usd);
-          return data.solana.usd;
+        const price = data?.data?.SOL?.[0]?.quote?.USD?.price;
+        
+        if (price) {
+          console.log('✅ SOL price from CoinMarketCap:', price);
+          return price;
         }
-      }
-
-      console.warn('⚠️ CoinGecko API response not OK, status:', response.status);
-    } catch (fetchError) {
-      clearTimeout(timeoutId);
-      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-        console.warn('⏱️ CoinGecko API request timed out after 3 seconds, using fallback');
+        console.warn('⚠️ Invalid CoinMarketCap response format:', data);
       } else {
-        console.warn('❌ CoinGecko fetch error:', fetchError);
+        console.warn('⚠️ CoinMarketCap API error:', response.status, await response.text());
       }
+    } catch (error) {
+      console.warn('❌ CoinMarketCap fetch error:', error);
     }
-    
-    // Fallback to Switchboard if CoinGecko fails
-    console.log('🔄 Falling back to Switchboard oracle...');
-    return await getSwitchboardPrice();
-  } catch (error) {
-    console.warn('❌ Failed to fetch SOL price, using simulated price:', error);
-    return getSimulatedPrice();
+  } else {
+    console.warn('⚠️ CoinMarketCap API key not configured');
   }
+  
+  // Fallback to Switchboard if CoinMarketCap fails or no API key
+  console.log('🔄 Falling back to Switchboard oracle...');
+  try {
+    const switchboardPrice = await getSwitchboardPrice();
+    if (switchboardPrice) {
+      return switchboardPrice;
+    }
+  } catch (error) {
+    console.error('❌ Switchboard fallback failed:', error);
+  }
+  
+  // Final fallback to simulated price
+  console.log('⚠️ Using simulated price as last resort');
+  return getSimulatedPrice();
 }
 
 /**

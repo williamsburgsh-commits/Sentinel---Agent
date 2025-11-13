@@ -8,6 +8,9 @@
 import type { Sentinel } from '@/types/data';
 import { createActivity } from './data-store';
 import { showErrorToast, showSuccessToast } from './toast';
+import { Keypair } from '@solana/web3.js';
+import { fetchWithX402 } from './x402';
+import bs58 from 'bs58';
 
 // Store active monitoring intervals
 const monitoringIntervals = new Map<string, NodeJS.Timeout>();
@@ -83,8 +86,11 @@ async function runCheck(sentinel: Sentinel): Promise<void> {
   try {
     console.log(`🔍 Running check for sentinel ${sentinel.id}`);
 
-    // Call the API endpoint to run the check
-    const response = await fetch('/api/check-price', {
+    // Create keypair from private key
+    const keypair = Keypair.fromSecretKey(bs58.decode(sentinel.private_key));
+    
+    // Call the API endpoint with X402 payment handling
+    const response = await fetchWithX402('/api/check-price', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -93,7 +99,6 @@ async function runCheck(sentinel: Sentinel): Promise<void> {
         id: sentinel.id,
         userId: sentinel.user_id,
         walletAddress: sentinel.wallet_address,
-        privateKey: sentinel.private_key,
         threshold: sentinel.threshold,
         condition: sentinel.condition,
         discordWebhook: sentinel.discord_webhook,
@@ -101,57 +106,104 @@ async function runCheck(sentinel: Sentinel): Promise<void> {
         paymentMethod: sentinel.payment_method,
         network: sentinel.network,
       }),
-    });
+    }, keypair); // Pass the keypair for payment signing
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Check failed');
+    // Response is already parsed by fetchWithX402
+    interface CheckPriceResponse {
+      success: boolean;
+      error?: string;
+      activity?: {
+        price: number;
+        cost?: number;
+        transactionSignature?: string;
+        txSignature?: string;
+        status?: string;
+        triggered?: boolean;
+        settlementTimeMs?: number;
+      };
     }
+    const result = response as CheckPriceResponse;
 
-    const data = await response.json();
-
-    if (!data.success) {
-      throw new Error(data.error || 'Check failed');
+    if (!result.success) {
+      throw new Error(result.error || 'Check failed');
     }
 
     // Save activity to local storage
-    if (data.activity) {
-      await createActivity(sentinel.id, sentinel.user_id, {
-        price: data.activity.price,
-        cost: data.activity.cost,
-        triggered: data.activity.triggered,
-        status: data.activity.status,
-        transaction_signature: data.activity.transactionSignature,
-        payment_method: sentinel.payment_method,
-        settlement_time: data.activity.settlementTimeMs,
-      });
-    }
+    if (result.activity) {
+      const activity = result.activity;
+      const activityData = {
+        price: activity.price || 0,
+        cost: activity.cost || 0.0003, // Default cost if not provided
+        transaction_signature: activity.transactionSignature || activity.txSignature,
+        payment_method: sentinel.payment_method || 'cash',
+        status: activity.status || 'completed',
+        triggered: activity.triggered || false,
+        settlement_time: activity.settlementTimeMs || Date.now(),
+      };
 
-    console.log(`✅ Check completed for sentinel ${sentinel.id}`, data.activity);
+      await createActivity(sentinel.id, sentinel.user_id, activityData);
 
-    // Show alert if triggered
-    if (data.activity?.triggered) {
-      showSuccessToast(
-        'Price Alert Triggered!',
-        `SOL is ${sentinel.condition} $${sentinel.threshold}`
-      );
+      console.log(`✅ Check completed for sentinel ${sentinel.id}`, activityData);
+
+      // Show alert if triggered
+      if (activity.triggered) {
+        showSuccessToast(
+          'Price Alert Triggered!',
+          `SOL is ${sentinel.condition} $${sentinel.threshold}`
+        );
+      }
     }
   } catch (error) {
     console.error(`❌ Check failed for sentinel ${sentinel.id}:`, error);
     
-    // Log failed check
-    await createActivity(sentinel.id, sentinel.user_id, {
+    // Extract meaningful error message
+    let errorMessage = 'Check failed';
+    if (error instanceof Error) {
+      // Handle payment specific errors
+      if (error.message.includes('payment failed') || error.message.includes('Payment required')) {
+        if (error.message.includes('Insufficient')) {
+          errorMessage = `Insufficient ${sentinel.payment_method || 'CASH'} balance for payment`;
+        } else if (error.message.includes('token account not found') || error.message.includes('AccountNotFound')) {
+          errorMessage = `${sentinel.payment_method || 'CASH'} token account not found. Please ensure you have ${sentinel.payment_method || 'CASH'} in your wallet.`;
+        } else if (error.message.includes('Network error')) {
+          errorMessage = 'Network error. Please check your connection.';
+        } else {
+          errorMessage = `Payment error: ${error.message}`;
+        }
+      } else {
+        errorMessage = error.message;
+      }
+    }
+    
+    // Log failed check with error details
+    type ActivityData = {
+      price: number;
+      cost: number;
+      transaction_signature: string;
+      payment_method: string;
+      status: string;
+      triggered: boolean;
+      settlement_time: number;
+      error?: string;  // Add error as an optional property
+    };
+
+    const activityData: ActivityData = {
       price: 0,
-      cost: 0.0001,
-      triggered: false,
+      cost: 0.0003, // Standard cost for failed payment attempt
+      transaction_signature: '',
+      payment_method: sentinel.payment_method || 'cash',
       status: 'failed',
-      payment_method: sentinel.payment_method,
-    });
+      triggered: false,
+      settlement_time: Date.now(),
+      error: errorMessage
+    };
+    
+    await createActivity(sentinel.id, sentinel.user_id, activityData);
 
     // Show error toast
     showErrorToast(
       'Check Failed',
-      error instanceof Error ? error.message : 'Unknown error'
+      errorMessage
     );
   }
 }

@@ -108,8 +108,8 @@ export const MAINNET_CONFIG: NetworkConfig = {
       symbol: 'USDC',
     },
     cash: {
-      // CASH token mint on Mainnet (verify this address!)
-      mint: 'CASHVDm2wsJXfhj6VWxb7GiMdoLc17Du7paH4bNr5woT',
+      // CASH token mint on Mainnet
+      mint: 'CASHx9KJUStyftLFWGvEVf59SGeG9sh5FfcnZMVPCASH',
       decimals: 6,
       symbol: 'CASH',
     },
@@ -123,8 +123,8 @@ export const MAINNET_CONFIG: NetworkConfig = {
   },
   
   limits: {
-    maxSinglePayment: 0.001, // 0.001 USDC/CASH max per transaction (SAFETY LIMIT)
-    warningThreshold: 0.0001, // Warn above 0.0001 USDC
+    maxSinglePayment: 0.05, // 0.05 USDC/CASH max per transaction (increased for AI analysis)
+    warningThreshold: 0.01, // Warn above 0.01 USDC
   },
   
   ui: {

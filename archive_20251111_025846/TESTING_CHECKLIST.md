@@ -162,20 +162,20 @@
 
 **Expected:**
 - [x] Console shows "Fetching SOL price..."
-- [x] CoinGecko API called first
+- [x] CoinMarketCap API called first (if API key is configured)
 - [x] Price returned (190-210 range typical)
-- [x] Falls back to Switchboard if CoinGecko fails
+- [x] Falls back to Switchboard if CoinMarketCap fails
 - [x] Falls back to simulated price if both fail
 
 **Console Logs Expected:**
 ```
-💰 Fetching SOL price...
-✅ SOL price from CoinGecko: 195.67
+🔍 Fetching SOL price from CoinMarketCap...
+✅ SOL price from CoinMarketCap: 195.67
 ```
 
-OR (if CoinGecko fails):
+OR (if CoinMarketCap fails):
 ```
-⚠️ CoinGecko API request timed out after 3 seconds, using fallback
+❌ CoinMarketCap fetch error: [error details]
 🔄 Falling back to Switchboard oracle...
 ✅ Switchboard price fetched: 196.12
 ```
@@ -575,8 +575,8 @@ OR (if CoinGecko fails):
 3. Test with network disconnected (optional)
 
 **Expected:**
-- [x] Switchboard fails → falls back to CoinGecko
-- [x] CoinGecko fails → falls back to simulated price
+- [x] Switchboard fails → falls back to simulated price
+- [x] CoinMarketCap fails → falls back to Switchboard
 - [x] Payment fails → activity marked "failed", monitoring continues
 - [x] Discord webhook fails → logged, monitoring continues
 - [x] DeepSeek fails → fallback analysis, monitoring continues

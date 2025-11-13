@@ -61,7 +61,7 @@ The application continues to function with:
 - **Local Storage** - All data persists in browser localStorage (client-side) or memory (server-side)
 - **Data Layer** - Unified storage via `lib/data-store.ts`
 - **Solana Integration** - Wallet creation, USDC/CASH tokens
-- **Price Feeds** - Switchboard with CoinGecko fallback
+- **Price Feeds** - CoinMarketCap with Switchboard fallback
 - **HTTP 402 Micropayments** - Sentinel wallets pay for price checks
 - **Discord Webhooks** - Notifications still work
 - **AI Analysis** - DeepSeek integration (requires DEEPSEEK_API_KEY)
