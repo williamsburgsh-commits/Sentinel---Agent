@@ -2,59 +2,77 @@ import { AggregatorAccount, SwitchboardProgram } from '@switchboard-xyz/solana.j
 import { PublicKey } from '@solana/web3.js';
 import { getSolanaConnection } from './solana';
 import { getCurrentNetwork } from './networks';
+import { getSOLPriceCoinMarketCap } from './coinmarketcap';
 
 // CoinMarketCap API configuration
 const COINMARKETCAP_API_KEY = process.env.COINMARKETCAP_API_KEY;
 const COINMARKETCAP_API_URL = 'https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest';
 
 /**
- * Get the current SOL/USD price from CoinMarketCap API
- * @returns The current SOL price in USD
- */
-export async function getSOLPrice(): Promise<number> {
-  // First try CoinMarketCap if API key is available
-  if (COINMARKETCAP_API_KEY) {
-    try {
-      console.log('🔍 Fetching SOL price from CoinMarketCap...');
-      const response = await fetch(
-        `${COINMARKETCAP_API_URL}?symbol=SOL&convert=USD`,
-        {
-          headers: {
-            'X-CMC_PRO_API_KEY': COINMARKETCAP_API_KEY,
-            'Accept': 'application/json',
-            'Accept-Encoding': 'deflate, gzip',
-          },
-          cache: 'no-store',
-          signal: AbortSignal.timeout(5000), // 5 second timeout
-        }
-      );
+// Call the API endpoint with X402 payment handling
+const response = await fetchWithX402('/api/check-price', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    id: sentinel.id,
+    userId: sentinel.user_id,
+    walletAddress: sentinel.wallet_address,
+    threshold: sentinel.threshold,
+    condition: sentinel.condition,
+    discordWebhook: sentinel.discord_webhook,
+    isActive: true,
+    paymentMethod: sentinel.payment_method,
+    network: sentinel.network,
+  }),
+}, keypair); // Pass the keypair for payment signing
 
-      if (response.ok) {
-        const data = await response.json();
-        const price = data?.data?.SOL?.[0]?.quote?.USD?.price;
-        
-        if (price) {
-          console.log('✅ SOL price from CoinMarketCap:', price);
-          return price;
-        }
-        console.warn('⚠️ Invalid CoinMarketCap response format:', data);
-      } else {
-        console.warn('⚠️ CoinMarketCap API error:', response.status, await response.text());
-      }
-    } catch (error) {
-      console.warn('❌ CoinMarketCap fetch error:', error);
-    }
-  } else {
-    console.warn('⚠️ CoinMarketCap API key not configured');
+// Response is already parsed by fetchWithX402
+interface CheckPriceResponse {
+  success: boolean;
+  error?: string;
+  activity?: {
+    price: number;
+    cost?: number;
+    transactionSignature?: string;
+    txSignature?: string;
+    status?: string;
+    triggered?: boolean;
+    settlementTimeMs?: number;
+  };
+}
+const result = response as CheckPriceResponse;
+
+if (!result.success) {
+  throw new Error(result.error || 'Check failed');
+}
+
+// Save activity to local storage
+if (result.activity) {
+  const activity = result.activity;
+  const activityData = {
+    price: activity.price || 0,
+    cost: activity.cost || 0.0003, // Default cost if not provided
+    transaction_signature: activity.transactionSignature || activity.txSignature,
+    payment_method: sentinel.payment_method || 'cash',
+    status: activity.status || 'completed',
+    triggered: activity.triggered || false,
+    settlement_time: activity.settlementTimeMs || Date.now(),
+  };
+
+  await createActivity(sentinel.id, sentinel.user_id, activityData);
+
+  console.log(`✅ Check completed for sentinel ${sentinel.id}`, activityData);
+
+  // Show alert if triggered
+  if (activity.triggered) {
+    showSuccessToast(
+      'Price Alert Triggered!',
+      `SOL is ${sentinel.condition} $${sentinel.threshold}`
+    );
   }
-  
-  // Fallback to Switchboard if CoinMarketCap fails or no API key
-  console.log('🔄 Falling back to Switchboard oracle...');
-  try {
-    const switchboardPrice = await getSwitchboardPrice();
-    if (switchboardPrice) {
-      return switchboardPrice;
-    }
+}
   } catch (error) {
     console.error('❌ Switchboard fallback failed:', error);
   }
@@ -65,7 +83,50 @@ export async function getSOLPrice(): Promise<number> {
 }
 
 /**
- * Get SOL price from Switchboard oracle (fallback)
+ * Get SOL price from CoinGecko API (deprecated, second fallback)
+ * @returns The current SOL price in USD
+ */
+async function getCoinGeckoPrice(): Promise<number> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+  
+  try {
+    const response = await fetch(
+      'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd',
+      {
+        headers: {
+          'Accept': 'application/json',
+        },
+        cache: 'no-store',
+        signal: controller.signal,
+      }
+    );
+    
+    clearTimeout(timeoutId);
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.solana && data.solana.usd) {
+        console.log('✅ SOL price from CoinGecko:', data.solana.usd);
+        return data.solana.usd;
+      }
+    }
+
+    console.warn('⚠️ CoinGecko API response not OK, status:', response.status);
+    return 0;
+  } catch (fetchError) {
+    clearTimeout(timeoutId);
+    if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+      console.warn('⏱️ CoinGecko API request timed out after 3 seconds');
+    } else {
+      console.warn('❌ CoinGecko fetch error:', fetchError);
+    }
+    return 0;
+  }
+}
+
+/**
+ * Get SOL price from Switchboard oracle (first fallback)
  * @returns The current SOL price in USD
  */
 async function getSwitchboardPrice(): Promise<number> {
