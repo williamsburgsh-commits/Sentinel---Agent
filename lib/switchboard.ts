@@ -2,12 +2,6 @@ import { AggregatorAccount, SwitchboardProgram } from '@switchboard-xyz/solana.j
 import { PublicKey } from '@solana/web3.js';
 import { getSolanaConnection } from './solana';
 import { getCurrentNetwork } from './networks';
-import { getSOLPriceCoinMarketCap } from './coinmarketcap';
-
-// CoinMarketCap API configuration
-const COINMARKETCAP_API_KEY = process.env.COINMARKETCAP_API_KEY;
-const COINMARKETCAP_API_URL = 'https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest';
-
 /**
 // Call the API endpoint with X402 payment handling
 const response = await fetchWithX402('/api/check-price', {
@@ -82,72 +76,6 @@ if (result.activity) {
   return getSimulatedPrice();
 }
 
-/**
- * Get SOL price from CoinGecko API (deprecated, second fallback)
- * @returns The current SOL price in USD
- */
-async function getCoinGeckoPrice(): Promise<number> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
-  
-  try {
-    const response = await fetch(
-      'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd',
-      {
-        headers: {
-          'Accept': 'application/json',
-        },
-        cache: 'no-store',
-        signal: controller.signal,
-      }
-    );
-    
-    clearTimeout(timeoutId);
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data.solana && data.solana.usd) {
-        console.log('✅ SOL price from CoinGecko:', data.solana.usd);
-        return data.solana.usd;
-      }
-    }
-
-    console.warn('⚠️ CoinGecko API response not OK, status:', response.status);
-    return 0;
-  } catch (fetchError) {
-    clearTimeout(timeoutId);
-    if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-      console.warn('⏱️ CoinGecko API request timed out after 3 seconds');
-    } else {
-      console.warn('❌ CoinGecko fetch error:', fetchError);
-    }
-    return 0;
-  }
-}
-
-/**
- * Get SOL price from Switchboard oracle (first fallback)
- * @returns The current SOL price in USD
- */
-async function getSwitchboardPrice(): Promise<number> {
-  try {
-    // Get current network configuration
-    const network = getCurrentNetwork();
-    
-    // LOG: Switchboard Configuration
-    console.log('🔗 Switchboard Oracle Configuration:');
-    console.log('  - Network:', network.name.toUpperCase());
-    console.log('  - RPC URL:', network.rpcUrl);
-    console.log('  - Program ID:', network.switchboard.programId);
-    console.log('  - Feed Address:', network.switchboard.feedAddress);
-    
-    // Get dynamic connection based on network
-    const connection = getSolanaConnection();
-    
-    // Use network-specific feed address
-    const feedAddress = new PublicKey(network.switchboard.feedAddress);
-    
-    // Initialize Switchboard program
     const program = await SwitchboardProgram.load(connection);
     
     // Load the aggregator account
