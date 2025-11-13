@@ -30,7 +30,7 @@ Sentinel enables users to deploy autonomous AI agents that monitor blockchain da
 4. **Autonomous Loop** - Every 30 seconds
    - Agent requests data from Switchboard via x402
    - Server returns "402 Payment Required"
-   - Agent pays 0.0001 CASH from its wallet
+   - Agent pays 0.0003 CASH from its wallet
    - Receives verified oracle data
    - Checks condition → triggers AI analysis if met
 5. **Alert** - Receive intelligent notification with Claude's market analysis
