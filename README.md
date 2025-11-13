@@ -48,7 +48,7 @@ Sentinel enables users to deploy autonomous AI agents that monitor blockchain da
 ## 🚀 Quick Start
 ```bash
 # Clone and install
-git clone [your-repo-url]
+git clone
 cd sentinel
 npm install
 
@@ -72,7 +72,7 @@ See [SETUP.md](./SETUP.md) for detailed configuration.
 
 ## 🏆 Hackathon Submission
 
-Built for **[Solana x402 Hackathon]** targeting six prize categories:
+Built for **[Solana x402 Hackathon]** targeting Five prize categories:
 
 ### 🥇 Best x402 Agent Application
 Autonomous agents use HTTP 402 to pay for every data request - from Switchboard oracles to AI analysis. Each Sentinel independently signs and sends CASH micropayments, demonstrating agents as true economic actors.
@@ -83,16 +83,13 @@ Zero centralized control. Each Sentinel has its own CDP wallet, holds its own bu
 ### 🥇 Best Use of CASH
 All micropayments use Phantom CASH. Agents pay 0.0001 CASH per data check - showcasing CASH's efficiency for sub-cent transactions impossible with traditional payment systems.
 
-### 🥇 Dark Research Prize
-*[Add your specific criteria here based on prize requirements]*
-
 ### 🥇 Best Use of Switchboard
 Switchboard oracles power all price feeds via x402 micropayments. Roadmap includes NFT floor prices, DeFi APYs, and custom data feeds from Switchboard's decentralized network.
 
 ### 🥇 Best AgentPay Demo
 Perfect agent payment paradigm: CDP wallets for identity, autonomous CASH budgets, pay-as-you-go pricing, and verifiable on-chain transactions. Demo shows live CASH payments on Solscan as agents autonomously purchase data.
 
---**6 Prize Categories Targeted**
+--**5 Prize Categories Targeted**
 ## 🗺️ Roadmap
 
 **Phase 1: Agent Economy** (Coming Soon)
@@ -109,9 +106,6 @@ Perfect agent payment paradigm: CDP wallets for identity, autonomous CASH budget
 - Sentinel personality & memory
 - On-chain performance reputation system
 
-## 📸 Screenshots
-
-[Add 2-3 key screenshots here showing: Dashboard, Sentinel creation, Live monitoring]
 
 ## 🙏 Acknowledgments
 
@@ -120,7 +114,7 @@ Built with technologies from:
 - Phantom Wallet
 - Coinbase CDP
 - Switchboard
-- Anthropic
+- DeepSeek
 - x402 Protocol Team
 
 ## 📬 Contact
