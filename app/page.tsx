@@ -5,7 +5,8 @@ import { motion, useInView, useAnimation } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { colors, animations, shadows } from '@/lib/design-tokens';
-import { Brain, Shield, Sparkles, Users, TrendingUp, Image, Vault, Coins } from 'lucide-react';
+import { Brain, Shield, Sparkles, Users, TrendingUp, Image, Vault, Coins, Zap, Bell, DollarSign, Activity, Lock, Rocket } from 'lucide-react';
+import { FeatureCard, HowItWorksStep, ComparisonTable, TechStackGrid, CTABlock } from '@/components/landing';
 
 // Animated counter component
 function AnimatedCounter({ end, duration = 2, suffix = '' }: { end: number; duration?: number; suffix?: string }) {
@@ -244,189 +245,70 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Features Section */}
+        {/* Features Section - Six Feature Grid */}
         <section id="features" className="py-32 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
             <motion.div
-              initial="initial"
-              whileInView="animate"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-100px' }}
-              variants={animations.staggerContainer}
+              transition={{ duration: 0.6 }}
               className="space-y-16"
             >
               {/* Section Title */}
-              <motion.div variants={animations.fadeIn} className="text-center space-y-4">
+              <div className="text-center space-y-4">
                 <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white">
                   Powerful Features
                 </h2>
                 <p className="text-xl text-gray-400 max-w-2xl mx-auto">
                   Everything you need for autonomous blockchain monitoring
                 </p>
-              </motion.div>
+              </div>
 
-              {/* Feature Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* Feature 1: Autonomous Monitoring */}
-                <motion.div
-                  variants={animations.slideUp}
-                  whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                  className="group relative p-8 rounded-3xl overflow-hidden"
-                  style={{
-                    background: colors.background.secondary,
-                    border: `1px solid ${colors.border.light}`,
-                    boxShadow: shadows.card,
-                  }}
-                >
-                  <div className="relative z-10 space-y-6">
-                    {/* Icon */}
-                    <motion.div
-                      className="w-16 h-16 rounded-2xl flex items-center justify-center"
-                      style={{ background: colors.gradients.primary }}
-                      whileHover={{ rotate: 360, scale: 1.1 }}
-                      transition={{ duration: 0.6 }}
-                    >
-                      <svg
-                        className="w-8 h-8 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
-                        />
-                      </svg>
-                    </motion.div>
-
-                    {/* Content */}
-                    <div className="space-y-3">
-                      <h3 className="text-2xl font-bold text-white">
-                        Autonomous Monitoring
-                      </h3>
-                      <p className="text-gray-400 leading-relaxed">
-                        Set it and forget it. Your Sentinel runs 24/7, continuously monitoring price movements with Switchboard oracles.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Hover Glow Effect */}
-                  <motion.div
-                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                    style={{
-                      background: `radial-gradient(circle at 50% 50%, ${colors.primary[500]}15, transparent 70%)`,
-                    }}
-                  />
-                </motion.div>
-
-                {/* Feature 2: Micropayments */}
-                <motion.div
-                  variants={animations.slideUp}
-                  whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                  className="group relative p-8 rounded-3xl overflow-hidden"
-                  style={{
-                    background: colors.background.secondary,
-                    border: `1px solid ${colors.border.light}`,
-                    boxShadow: shadows.card,
-                  }}
-                >
-                  <div className="relative z-10 space-y-6">
-                    {/* Icon */}
-                    <motion.div
-                      className="w-16 h-16 rounded-2xl flex items-center justify-center"
-                      style={{ background: colors.gradients.success }}
-                      whileHover={{ rotate: 360, scale: 1.1 }}
-                      transition={{ duration: 0.6 }}
-                    >
-                      <svg
-                        className="w-8 h-8 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                    </motion.div>
-
-                    {/* Content */}
-                    <div className="space-y-3">
-                      <h3 className="text-2xl font-bold text-white">
-                        Micropayments
-                      </h3>
-                      <p className="text-gray-400 leading-relaxed">
-                        Pay only for what you use. Each price check costs just $0.0001 in USDC or CASH—true pay-per-use pricing.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Hover Glow Effect */}
-                  <motion.div
-                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                    style={{
-                      background: `radial-gradient(circle at 50% 50%, ${colors.success[500]}15, transparent 70%)`,
-                    }}
-                  />
-                </motion.div>
-
-                {/* Feature 3: Instant Alerts */}
-                <motion.div
-                  variants={animations.slideUp}
-                  whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                  className="group relative p-8 rounded-3xl overflow-hidden"
-                  style={{
-                    background: colors.background.secondary,
-                    border: `1px solid ${colors.border.light}`,
-                    boxShadow: shadows.card,
-                  }}
-                >
-                  <div className="relative z-10 space-y-6">
-                    {/* Icon */}
-                    <motion.div
-                      className="w-16 h-16 rounded-2xl flex items-center justify-center"
-                      style={{ background: colors.gradients.warning }}
-                      whileHover={{ rotate: [0, -10, 10, -10, 0], scale: 1.1 }}
-                      transition={{ duration: 0.6 }}
-                    >
-                      <svg
-                        className="w-8 h-8 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                        />
-                      </svg>
-                    </motion.div>
-
-                    {/* Content */}
-                    <div className="space-y-3">
-                      <h3 className="text-2xl font-bold text-white">
-                        Instant Alerts
-                      </h3>
-                      <p className="text-gray-400 leading-relaxed">
-                        Get notified the moment your price threshold is hit. Discord webhooks deliver alerts instantly, wherever you are.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Hover Glow Effect */}
-                  <motion.div
-                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                    style={{
-                      background: `radial-gradient(circle at 50% 50%, ${colors.warning[500]}15, transparent 70%)`,
-                    }}
-                  />
-                </motion.div>
+              {/* Feature Cards - Six Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <FeatureCard
+                  icon={Activity}
+                  title="Autonomous Monitoring"
+                  description="Set it and forget it. Your Sentinel runs 24/7, continuously monitoring price movements with real-time oracles."
+                  gradient={colors.gradients.primary}
+                  index={0}
+                />
+                <FeatureCard
+                  icon={DollarSign}
+                  title="Micropayments"
+                  description="Pay only for what you use. Each price check costs just $0.0003 in USDC or CASH—true pay-per-use pricing."
+                  gradient={colors.gradients.success}
+                  index={1}
+                />
+                <FeatureCard
+                  icon={Bell}
+                  title="Instant Alerts"
+                  description="Get notified the moment your price threshold is hit. Discord webhooks deliver alerts instantly, wherever you are."
+                  gradient={colors.gradients.warning}
+                  index={2}
+                />
+                <FeatureCard
+                  icon={Brain}
+                  title="AI-Powered Analysis"
+                  description="DeepSeek AI analyzes price patterns and provides intelligent insights to help you make informed decisions."
+                  gradient={colors.gradients.primary}
+                  index={3}
+                />
+                <FeatureCard
+                  icon={Lock}
+                  title="Secure & Non-Custodial"
+                  description="Your Sentinel uses its own wallet. You maintain full control—no intermediaries, no risk to your funds."
+                  gradient={colors.gradients.success}
+                  index={4}
+                />
+                <FeatureCard
+                  icon={Zap}
+                  title="Lightning Fast"
+                  description="Built on Solana's high-performance blockchain. Sub-second transactions and real-time price feeds."
+                  gradient={colors.gradients.warning}
+                  index={5}
+                />
               </div>
             </motion.div>
           </div>
@@ -527,7 +409,7 @@ export default function Home() {
                         backgroundClip: 'text',
                       }}
                     >
-                      $0.0001
+                      $0.0003
                     </div>
                     <div className="text-xl text-gray-300 font-semibold">
                       Cost per Check
@@ -538,6 +420,112 @@ export default function Home() {
                   </motion.div>
                 </div>
               </div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* How It Works Section */}
+        <section className="py-32 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-5xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-100px' }}
+              transition={{ duration: 0.6 }}
+              className="space-y-16"
+            >
+              {/* Section Title */}
+              <div className="text-center space-y-4">
+                <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white">
+                  How It Works
+                </h2>
+                <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+                  Deploy your autonomous price sentinel in four simple steps
+                </p>
+              </div>
+
+              {/* Timeline Steps */}
+              <div className="space-y-8">
+                <HowItWorksStep
+                  step={1}
+                  icon={Rocket}
+                  title="Create Your Sentinel"
+                  description="Sign up and configure your first Sentinel with your target price and alert threshold. Takes less than 2 minutes."
+                  gradient={colors.gradients.primary}
+                />
+                <HowItWorksStep
+                  step={2}
+                  icon={DollarSign}
+                  title="Fund Your Wallet"
+                  description="Add a small amount of USDC or CASH to your Sentinel's wallet. Each price check costs just $0.0003."
+                  gradient={colors.gradients.success}
+                />
+                <HowItWorksStep
+                  step={3}
+                  icon={Activity}
+                  title="Activate Monitoring"
+                  description="Your Sentinel starts monitoring autonomously, checking prices every 30 seconds using HTTP 402 micropayments."
+                  gradient={colors.gradients.warning}
+                />
+                <HowItWorksStep
+                  step={4}
+                  icon={Bell}
+                  title="Receive Instant Alerts"
+                  description="When your price threshold is hit, get instant Discord notifications with AI-powered market analysis."
+                  gradient={colors.gradients.primary}
+                  isLast
+                />
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Comparison Section */}
+        <section className="py-32 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-100px' }}
+              transition={{ duration: 0.6 }}
+              className="space-y-16"
+            >
+              {/* Section Title */}
+              <div className="text-center space-y-4">
+                <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white">
+                  Why Choose Sentinel?
+                </h2>
+                <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+                  See how autonomous monitoring compares to traditional methods
+                </p>
+              </div>
+
+              <ComparisonTable />
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Tech Stack Section */}
+        <section className="py-32 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-100px' }}
+              transition={{ duration: 0.6 }}
+              className="space-y-16"
+            >
+              {/* Section Title */}
+              <div className="text-center space-y-4">
+                <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white">
+                  Built on Solana-Native Tools
+                </h2>
+                <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+                  Leveraging the best of the Solana ecosystem for speed, security, and scalability
+                </p>
+              </div>
+
+              <TechStackGrid />
             </motion.div>
           </div>
         </section>
@@ -757,42 +745,7 @@ export default function Home() {
 
         {/* Final CTA Section */}
         <section className="py-32 px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true }}
-            variants={animations.fadeIn}
-            className="max-w-4xl mx-auto text-center space-y-8"
-          >
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white">
-              Ready to Start Monitoring?
-            </h2>
-            <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-              Deploy your first Sentinel in seconds. No credit card required.
-            </p>
-            <Link href="/auth/signup">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="inline-block"
-              >
-                <Button
-                  size="lg"
-                  className="relative text-xl px-12 py-8 font-bold text-white overflow-hidden group"
-                  style={{
-                    background: colors.gradients.primary,
-                    boxShadow: shadows.primaryGlow,
-                  }}
-                >
-                  <span className="relative z-10">Get Started Free</span>
-                  <motion.div
-                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                    style={{ background: colors.gradients.primaryHover }}
-                  />
-                </Button>
-              </motion.div>
-            </Link>
-          </motion.div>
+          <CTABlock />
         </section>
 
         {/* Footer */}
