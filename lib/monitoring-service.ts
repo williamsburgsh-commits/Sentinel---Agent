@@ -3,11 +3,15 @@
  * 
  * Centralized service to manage active sentinel monitoring
  * Runs price checks at regular intervals for active sentinels
+ * Uses HTTP 402 payment protocol for price data access
  */
 
 import type { Sentinel } from '@/types/data';
 import { createActivity } from './data-store';
 import { showErrorToast, showSuccessToast } from './toast';
+import { Keypair } from '@solana/web3.js';
+import bs58 from 'bs58';
+import { checkPriceWith402 } from './x402-client';
 
 // Store active monitoring intervals
 const monitoringIntervals = new Map<string, NodeJS.Timeout>();
@@ -77,81 +81,117 @@ export function getMonitoringCount(): number {
 }
 
 /**
- * Run a single price check for a sentinel
+ * Run a single price check for a sentinel using HTTP 402 protocol
  */
 async function runCheck(sentinel: Sentinel): Promise<void> {
+  const startTime = Date.now();
+  
   try {
-    console.log(`🔍 Running check for sentinel ${sentinel.id}`);
+    console.log(`🔍 Running HTTP 402 check for sentinel ${sentinel.id}`);
 
-    // Call the API endpoint to run the check
-    const response = await fetch('/api/check-price', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        id: sentinel.id,
-        userId: sentinel.user_id,
-        walletAddress: sentinel.wallet_address,
-        privateKey: sentinel.private_key,
-        threshold: sentinel.threshold,
-        condition: sentinel.condition,
-        discordWebhook: sentinel.discord_webhook,
-        isActive: true,
-        paymentMethod: sentinel.payment_method,
-        network: sentinel.network,
-      }),
-    });
+    // Reconstruct sentinel keypair for payment
+    const sentinelKeypair = Keypair.fromSecretKey(bs58.decode(sentinel.private_key));
+    console.log('🔐 Sentinel wallet:', sentinelKeypair.publicKey.toBase58());
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Check failed');
-    }
+    // Prepare sentinel configuration
+    const sentinelConfig = {
+      id: sentinel.id,
+      userId: sentinel.user_id,
+      walletAddress: sentinel.wallet_address,
+      privateKey: sentinel.private_key,
+      threshold: sentinel.threshold,
+      condition: sentinel.condition,
+      discordWebhook: sentinel.discord_webhook,
+      isActive: true,
+      paymentMethod: sentinel.payment_method,
+      network: sentinel.network,
+    };
 
-    const data = await response.json();
+    // Use HTTP 402 client to handle payment flow
+    console.log('💳 Initiating HTTP 402 payment flow...');
+    const data = await checkPriceWith402(sentinelConfig, sentinelKeypair);
+    
+    const totalTime = Date.now() - startTime;
+    console.log(`⚡ Total check time: ${totalTime}ms`);
 
-    if (!data.success) {
-      throw new Error(data.error || 'Check failed');
+    // Handle different response formats
+    let activity;
+    if (data.activity) {
+      // Response includes activity object
+      activity = data.activity;
+      activity.settlementTimeMs = totalTime;
+    } else if (data.price !== undefined) {
+      // Build activity from response fields
+      activity = {
+        price: data.price,
+        cost: 0.0003,
+        triggered: false, // Determined below
+        status: 'success',
+        transactionSignature: data.txSignature,
+        timestamp: new Date(),
+        settlementTimeMs: totalTime,
+      };
+      
+      // Check if threshold triggered
+      if (sentinel.condition === 'above' && data.price > sentinel.threshold) {
+        activity.triggered = true;
+      } else if (sentinel.condition === 'below' && data.price < sentinel.threshold) {
+        activity.triggered = true;
+      }
+    } else {
+      throw new Error('Invalid response format from check-price endpoint');
     }
 
     // Save activity to local storage
-    if (data.activity) {
-      await createActivity(sentinel.id, sentinel.user_id, {
-        price: data.activity.price,
-        cost: data.activity.cost,
-        triggered: data.activity.triggered,
-        status: data.activity.status,
-        transaction_signature: data.activity.transactionSignature,
-        payment_method: sentinel.payment_method,
-        settlement_time: data.activity.settlementTimeMs,
-      });
-    }
+    await createActivity(sentinel.id, sentinel.user_id, {
+      price: activity.price,
+      cost: activity.cost,
+      triggered: activity.triggered,
+      status: activity.status,
+      transaction_signature: activity.transactionSignature,
+      payment_method: sentinel.payment_method,
+      settlement_time: activity.settlementTimeMs,
+    });
 
-    console.log(`✅ Check completed for sentinel ${sentinel.id}`, data.activity);
+    console.log(`✅ Check completed for sentinel ${sentinel.id}`, activity);
 
     // Show alert if triggered
-    if (data.activity?.triggered) {
+    if (activity.triggered) {
       showSuccessToast(
         'Price Alert Triggered!',
-        `SOL is ${sentinel.condition} $${sentinel.threshold}`
+        `SOL is ${sentinel.condition} ${sentinel.threshold}`
       );
     }
   } catch (error) {
     console.error(`❌ Check failed for sentinel ${sentinel.id}:`, error);
     
+    // Handle insufficient balance error
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const isInsufficientBalance = errorMessage.toLowerCase().includes('insufficient');
+    
     // Log failed check
     await createActivity(sentinel.id, sentinel.user_id, {
       price: 0,
-      cost: 0.0001,
+      cost: 0.0003,
       triggered: false,
       status: 'failed',
       payment_method: sentinel.payment_method,
+      error_message: errorMessage,
     });
 
-    // Show error toast
-    showErrorToast(
-      'Check Failed',
-      error instanceof Error ? error.message : 'Unknown error'
-    );
+    // Show error toast with appropriate message
+    if (isInsufficientBalance) {
+      showErrorToast(
+        'Insufficient Balance',
+        'Please fund your sentinel wallet to continue monitoring'
+      );
+      // Auto-pause sentinel on insufficient balance
+      stopMonitoring(sentinel.id);
+    } else {
+      showErrorToast(
+        'Check Failed',
+        errorMessage
+      );
+    }
   }
 }
