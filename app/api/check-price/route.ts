@@ -3,12 +3,12 @@ import { getSOLPrice } from '@/lib/switchboard';
 import { verifyUSDCPayment } from '@/lib/payments';
 import { sendDiscordAlert } from '@/lib/notifications';
 import { SentinelConfig } from '@/types';
+import { getCurrentNetwork, getAvailableTokens, getDefaultToken } from '@/lib/networks';
 
 /**
  * HTTP 402 Payment Protocol Configuration
  */
-const PAYMENT_AMOUNT = 0.0003; // 0.0003 CASH per check
-const PAYMENT_TOKEN = 'CASH';
+const PAYMENT_AMOUNT = 0.0003; // 0.0003 USDC/CASH per check
 
 /**
  * GET /api/check-price
@@ -92,17 +92,25 @@ export async function POST(request: NextRequest) {
         });
       }
 
+      // Get network-aware token configuration
+      const network = getCurrentNetwork();
+      const availableTokens = getAvailableTokens();
+      const defaultToken = getDefaultToken();
+
       console.log('💰 Payment details:');
-      console.log('   - Amount:', PAYMENT_AMOUNT, PAYMENT_TOKEN);
+      console.log('   - Network:', network.displayName.toUpperCase());
+      console.log('   - Amount:', PAYMENT_AMOUNT);
       console.log('   - Recipient:', recipient);
-      console.log('   - Token:', PAYMENT_TOKEN);
+      console.log('   - Default Token:', defaultToken);
+      console.log('   - Available Tokens:', availableTokens.join(', '));
 
       // Return 402 with payment details
       const response = NextResponse.json(
         {
           amount: PAYMENT_AMOUNT,
           recipient,
-          token: PAYMENT_TOKEN,
+          token: defaultToken,
+          availableTokens,
           message: 'Payment required to access price data',
         },
         { status: 402 }
@@ -111,7 +119,7 @@ export async function POST(request: NextRequest) {
       // Add payment-related headers
       response.headers.set('WWW-Authenticate', 'Solana-Payment');
       response.headers.set('X-Payment-Required', PAYMENT_AMOUNT.toString());
-      response.headers.set('X-Payment-Token', PAYMENT_TOKEN);
+      response.headers.set('X-Payment-Token', defaultToken);
 
       return response;
     }
@@ -120,15 +128,27 @@ export async function POST(request: NextRequest) {
     console.log('✅ Payment proof provided, verifying...');
     console.log('🔗 Transaction signature:', paymentProof);
 
+    // Get which token was used for payment
+    const tokenUsed = request.headers.get('X-Payment-Token-Used') as 'USDC' | 'CASH' | null;
+    console.log('🪙 Token used for payment:', tokenUsed || 'Not specified (assuming USDC)');
+
+    // Verify payment on-chain
+    // Note: verifyUSDCPayment works for both USDC and CASH (it just verifies the tx exists and succeeded)
     const isPaymentValid = await verifyUSDCPayment(paymentProof);
     
     if (!isPaymentValid) {
       console.error('❌ Payment verification failed');
+      
+      // Get network-aware defaults for error response
+      const availableTokens = getAvailableTokens();
+      const defaultToken = getDefaultToken();
+      
       return NextResponse.json(
         {
           amount: PAYMENT_AMOUNT,
           recipient: process.env.NEXT_PUBLIC_PAYMENT_RECIPIENT_WALLET,
-          token: PAYMENT_TOKEN,
+          token: defaultToken,
+          availableTokens,
           message: 'Payment verification failed',
           error: 'The provided transaction signature could not be verified. Please ensure the payment was sent correctly.',
         },
@@ -186,7 +206,7 @@ export async function POST(request: NextRequest) {
       triggered,
       transactionSignature: paymentProof,
       status: 'success' as const,
-      paymentMethod: sentinelConfig.paymentMethod || 'cash',
+      paymentMethod: sentinelConfig.paymentMethod || 'usdc',
       settlementTimeMs: undefined, // Calculated by client
     };
 
@@ -201,6 +221,7 @@ export async function POST(request: NextRequest) {
       currency: 'USD',
       paid: true,
       txSignature: paymentProof,
+      tokenUsed: tokenUsed || 'USDC',
       success: true,
       activity,
     });

@@ -14,11 +14,13 @@
 
 import { Keypair, PublicKey } from '@solana/web3.js';
 import { sendCASHPayment, sendUSDCPayment } from './payments';
+import { getCurrentNetwork, getAvailableTokens, isDevnet } from './networks';
 
 export interface X402PaymentDetails {
   amount: number;
   recipient: string;
   token: 'CASH' | 'USDC';
+  availableTokens?: Array<'USDC' | 'CASH'>;
   message: string;
 }
 
@@ -42,9 +44,16 @@ export async function fetchWith402<T>(
   url: string,
   options: RequestInit,
   payerKeypair: Keypair,
-  paymentMethod: 'usdc' | 'cash' = 'cash'
+  paymentMethod: 'usdc' | 'cash' = 'usdc'
 ): Promise<T> {
+  // Get network configuration
+  const network = getCurrentNetwork();
+  const availableTokens = getAvailableTokens();
+  
   console.log('🔄 ========== HTTP 402 PAYMENT FLOW ==========');
+  console.log('🌐 Network:', network.displayName.toUpperCase());
+  console.log('🪙 Available tokens:', availableTokens.join(', '));
+  console.log('💳 Preferred payment method:', paymentMethod.toUpperCase());
   console.log('📍 Step 1: Initial request without payment proof');
   
   try {
@@ -65,14 +74,34 @@ export async function fetchWith402<T>(
         throw new Error('Invalid payment details in 402 response');
       }
       
+      // Determine which token to use based on network and preferences
+      let tokenToUse: 'USDC' | 'CASH';
+      
+      if (isDevnet()) {
+        // On devnet, only USDC is available
+        tokenToUse = 'USDC';
+        console.log('🧪 Devnet detected - forcing USDC payment');
+      } else {
+        // On mainnet, respect paymentMethod preference if available
+        const availableTokensFromServer = paymentDetails.availableTokens || ['USDC'];
+        
+        if (paymentMethod === 'cash' && availableTokensFromServer.includes('CASH')) {
+          tokenToUse = 'CASH';
+          console.log('💰 Mainnet - using CASH payment (user preference)');
+        } else {
+          tokenToUse = 'USDC';
+          console.log('💵 Mainnet - using USDC payment');
+        }
+      }
+      
       // Step 3: Send payment
-      console.log(`💸 Step 3: Sending ${paymentDetails.amount} ${paymentDetails.token} payment to ${paymentDetails.recipient}`);
+      console.log(`💸 Step 3: Sending ${paymentDetails.amount} ${tokenToUse} payment to ${paymentDetails.recipient}`);
       const recipientPublicKey = new PublicKey(paymentDetails.recipient);
       
       let txSignature: string;
       const paymentStartTime = Date.now();
       
-      if (paymentMethod === 'cash' || paymentDetails.token === 'CASH') {
+      if (tokenToUse === 'CASH') {
         txSignature = await sendCASHPayment(
           payerKeypair,
           recipientPublicKey,
@@ -88,6 +117,7 @@ export async function fetchWith402<T>(
       
       const paymentTime = Date.now() - paymentStartTime;
       console.log('✅ Payment sent successfully!');
+      console.log('🪙 Token used:', tokenToUse);
       console.log('🔗 Transaction signature:', txSignature);
       console.log('⚡ Payment time:', paymentTime, 'ms');
       
@@ -98,6 +128,7 @@ export async function fetchWith402<T>(
         headers: {
           ...options.headers,
           'X-Payment-Proof': txSignature,
+          'X-Payment-Token-Used': tokenToUse,
         },
       });
       
@@ -159,6 +190,7 @@ export interface CheckPriceResponse {
   currency: string;
   paid: boolean;
   txSignature: string;
+  tokenUsed?: 'USDC' | 'CASH';
   success: boolean;
   activity?: {
     timestamp: Date;
@@ -206,6 +238,6 @@ export async function checkPriceWith402(
       body: JSON.stringify(sentinelConfig),
     },
     payerKeypair,
-    sentinelConfig.paymentMethod || 'cash'
+    sentinelConfig.paymentMethod || 'usdc'
   );
 }
