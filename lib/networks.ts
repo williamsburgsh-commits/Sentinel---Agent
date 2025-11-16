@@ -108,8 +108,8 @@ export const MAINNET_CONFIG: NetworkConfig = {
       symbol: 'USDC',
     },
     cash: {
-      // CASH token mint on Mainnet (verify this address!)
-      mint: 'CASHVDm2wsJXfhj6VWxb7GiMdoLc17Du7paH4bNr5woT',
+      // Phantom CASH token mint on Mainnet
+      mint: 'CASHx9KJUStyftLFWGvEVf59SGeG9sh5FfcnZMVPCASH',
       decimals: 6,
       symbol: 'CASH',
     },
@@ -241,6 +241,28 @@ export function getRPCEndpoint(network: NetworkType = 'devnet'): string {
     return MAINNET_CONFIG.rpcUrl;
   }
   return DEVNET_CONFIG.rpcUrl;
+}
+
+/**
+ * Get available payment tokens for the current network
+ */
+export function getAvailableTokens(): Array<'USDC' | 'CASH'> {
+  const network = getCurrentNetwork();
+  const tokens: Array<'USDC' | 'CASH'> = ['USDC'];
+  
+  if (network.tokens.cash) {
+    tokens.push('CASH');
+  }
+  
+  return tokens;
+}
+
+/**
+ * Get default payment token for the current network
+ */
+export function getDefaultToken(): 'USDC' | 'CASH' {
+  // Always default to USDC for safety
+  return 'USDC';
 }
 
 // Export current network as default
