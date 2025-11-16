@@ -1,12 +1,22 @@
 'use client';
 
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { motion, useInView, useAnimation } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { colors, animations, shadows } from '@/lib/design-tokens';
-import { Brain, Shield, Sparkles, Users, TrendingUp, Image, Vault, Coins, Zap, Bell, DollarSign, Activity, Lock, Rocket } from 'lucide-react';
+import { Brain, Shield, Sparkles, Users, TrendingUp, Image, Vault, Coins, Zap, Bell, DollarSign, Activity, Lock, Rocket, Play, ArrowRight } from 'lucide-react';
 import { FeatureCard, HowItWorksStep, ComparisonTable, TechStackGrid, CTABlock } from '@/components/landing';
+
+const Hero3D = dynamic(() => import('@/components/landing/Hero3D'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900/20 to-green-900/20 rounded-3xl animate-pulse">
+      <div className="text-white/50 text-lg">Loading 3D Scene...</div>
+    </div>
+  ),
+});
 
 // Animated counter component
 function AnimatedCounter({ end, duration = 2, suffix = '' }: { end: number; duration?: number; suffix?: string }) {
@@ -48,14 +58,24 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen overflow-hidden">
-      {/* Animated Gradient Background */}
+      {/* Dark Premium Background */}
       <div className="fixed inset-0 -z-10">
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-[#14141F] to-black" />
         
-        {/* Floating Orbs */}
+        {/* Grid Overlay */}
+        <div 
+          className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage: `linear-gradient(rgba(20, 241, 149, 0.1) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(20, 241, 149, 0.1) 1px, transparent 1px)`,
+            backgroundSize: '50px 50px',
+          }}
+        />
+        
+        {/* Solana Accent Gradient Orbs */}
         <motion.div
-          className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full opacity-20 blur-3xl"
-          style={{ background: colors.gradients.primary }}
+          className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full opacity-30 blur-3xl"
+          style={{ background: 'radial-gradient(circle, #9945FF 0%, transparent 70%)' }}
           animate={{
             x: [0, 100, 0],
             y: [0, -100, 0],
@@ -68,8 +88,8 @@ export default function Home() {
           }}
         />
         <motion.div
-          className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full opacity-20 blur-3xl"
-          style={{ background: colors.gradients.success }}
+          className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full opacity-30 blur-3xl"
+          style={{ background: 'radial-gradient(circle, #14F195 0%, transparent 70%)' }}
           animate={{
             x: [0, -100, 0],
             y: [0, 100, 0],
@@ -82,8 +102,8 @@ export default function Home() {
           }}
         />
         <motion.div
-          className="absolute top-1/2 right-1/3 w-64 h-64 rounded-full opacity-15 blur-3xl"
-          style={{ background: colors.gradients.warning }}
+          className="absolute top-1/2 right-1/3 w-64 h-64 rounded-full opacity-20 blur-3xl"
+          style={{ background: 'radial-gradient(circle, #9945FF 0%, transparent 70%)' }}
           animate={{
             x: [0, 50, 0],
             y: [0, -50, 0],
@@ -100,10 +120,17 @@ export default function Home() {
       {/* Main Content */}
       <div className="relative z-10">
         {/* Header */}
-        <header className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 lg:px-8 py-6">
+        <header className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 lg:px-8 py-6 bg-black/20 backdrop-blur-lg border-b border-white/10">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <Link href="/" className="text-2xl font-bold text-white">
-              Sentinel
+            <Link href="/" className="text-2xl font-bold">
+              <span
+                className="bg-clip-text text-transparent"
+                style={{
+                  backgroundImage: 'linear-gradient(135deg, #9945FF 0%, #14F195 100%)',
+                }}
+              >
+                Sentinel
+              </span>
             </Link>
             <div className="flex items-center gap-4">
               <Link href="/auth/login">
@@ -116,130 +143,211 @@ export default function Home() {
               </Link>
               <Link href="/auth/signup">
                 <Button
-                  className="text-white"
+                  className="text-white font-semibold relative overflow-hidden group"
                   style={{
-                    background: colors.gradients.primary,
+                    background: 'linear-gradient(135deg, #9945FF 0%, #14F195 100%)',
                   }}
                 >
-                  Sign Up
+                  <span className="relative z-10">Sign Up</span>
+                  <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Button>
               </Link>
             </div>
           </div>
         </header>
 
-        {/* Hero Section */}
-        <section className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto text-center">
-            <motion.div
-              initial="initial"
-              animate="animate"
-              variants={animations.staggerContainer}
-              className="space-y-8"
-            >
-              {/* Main Heading */}
-              <motion.div variants={animations.fadeIn} className="space-y-4">
-                <motion.h1
-                  className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tight"
-                  style={{
-                    background: colors.gradients.primary,
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                  }}
-                >
-                  Sentinel
-                </motion.h1>
-                <motion.div
-                  className="h-2 w-32 mx-auto rounded-full"
-                  style={{ background: colors.gradients.primary }}
-                  initial={{ width: 0 }}
-                  animate={{ width: 128 }}
-                  transition={{ duration: 1, delay: 0.5 }}
-                />
-              </motion.div>
-
-              {/* Subheading - "AI that works for you" */}
-              <motion.p
-                variants={animations.slideUp}
-                className="text-2xl sm:text-3xl md:text-4xl font-semibold text-gray-200 max-w-4xl mx-auto"
+        {/* Hero Section - Premium Split Layout */}
+        <section className="min-h-screen flex items-center px-4 sm:px-6 lg:px-8 pt-24">
+          <div className="max-w-7xl mx-auto w-full">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 items-center">
+              {/* Left Content - 60% on desktop (3 columns) */}
+              <motion.div
+                initial="initial"
+                animate="animate"
+                variants={animations.staggerContainer}
+                className="lg:col-span-3 space-y-8 text-center lg:text-left"
               >
-                AI that works for you
-              </motion.p>
-
-              {/* Description */}
-              <motion.p
-                variants={animations.slideUp}
-                className="text-lg sm:text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed"
-              >
-                Set price alerts, monitor Solana blockchain activity, and receive instant notifications—all running autonomously with pay-per-use micropayments.
-              </motion.p>
-
-              {/* CTA Buttons */}
-              <motion.div variants={animations.scale} className="pt-8 flex flex-wrap gap-4 justify-center">
-                <Link href="/dashboard">
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="inline-block"
+                {/* Main Heading */}
+                <motion.div variants={animations.fadeIn} className="space-y-6">
+                  <motion.h1
+                    className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-tight"
                   >
-                    <Button
-                      size="lg"
-                      className="relative text-xl px-12 py-8 font-bold text-white overflow-hidden group"
+                    <span
+                      className="bg-clip-text text-transparent"
                       style={{
-                        background: colors.gradients.primary,
-                        boxShadow: shadows.primaryGlow,
+                        backgroundImage: 'linear-gradient(135deg, #9945FF 0%, #14F195 100%)',
                       }}
                     >
-                      <span className="relative z-10">Launch Dashboard</span>
-                      <motion.div
-                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                        style={{ background: colors.gradients.primaryHover }}
-                      />
-                    </Button>
-                  </motion.div>
-                </Link>
-                <Link href="#features">
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="inline-block"
-                  >
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      className="text-xl px-12 py-8 font-bold text-white border-2 border-white/30 hover:border-white/50 hover:bg-white/10 bg-transparent"
+                      Autonomous
+                    </span>
+                    <br />
+                    <span className="text-white">
+                      AI Agents on
+                    </span>
+                    <br />
+                    <span
+                      className="bg-clip-text text-transparent"
+                      style={{
+                        backgroundImage: 'linear-gradient(135deg, #14F195 0%, #9945FF 100%)',
+                      }}
                     >
-                      Learn More
-                    </Button>
-                  </motion.div>
-                </Link>
+                      Solana
+                    </span>
+                  </motion.h1>
+                  
+                  {/* Subheadline */}
+                  <motion.p
+                    variants={animations.slideUp}
+                    className="text-xl sm:text-2xl text-gray-300 max-w-2xl mx-auto lg:mx-0 leading-relaxed"
+                  >
+                    Deploy intelligent sentinels that monitor blockchain activity 24/7.
+                    Pay only for what you use with HTTP 402 micropayments.
+                  </motion.p>
+                </motion.div>
+
+                {/* CTA Buttons */}
+                <motion.div
+                  variants={animations.scale}
+                  className="flex flex-wrap gap-4 justify-center lg:justify-start"
+                >
+                  <Link href="/dashboard">
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <Button
+                        size="lg"
+                        className="relative text-lg px-10 py-7 font-bold text-white overflow-hidden group"
+                        style={{
+                          background: 'linear-gradient(135deg, #9945FF 0%, #14F195 100%)',
+                          boxShadow: '0 0 30px rgba(153, 69, 255, 0.4)',
+                        }}
+                      >
+                        <Rocket className="w-5 h-5 mr-2 inline-block" />
+                        <span className="relative z-10">Deploy Sentinel</span>
+                        <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </Button>
+                    </motion.div>
+                  </Link>
+                  <Link href="#features">
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        className="text-lg px-10 py-7 font-bold text-white border-2 border-white/30 hover:border-[#14F195] hover:bg-white/10 bg-transparent relative overflow-hidden group"
+                      >
+                        <Play className="w-5 h-5 mr-2 inline-block" />
+                        <span className="relative z-10">Watch Demo</span>
+                        <div
+                          className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity"
+                          style={{ background: 'linear-gradient(135deg, #9945FF 0%, #14F195 100%)' }}
+                        />
+                      </Button>
+                    </motion.div>
+                  </Link>
+                </motion.div>
+
+                {/* Live Stats Row */}
+                <motion.div
+                  variants={animations.slideUp}
+                  className="pt-8 grid grid-cols-3 gap-6 max-w-2xl mx-auto lg:mx-0"
+                >
+                  <div className="text-center lg:text-left">
+                    <div
+                      className="text-3xl sm:text-4xl font-black mb-1"
+                      style={{
+                        backgroundImage: 'linear-gradient(135deg, #9945FF 0%, #14F195 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text',
+                      }}
+                    >
+                      <AnimatedCounter end={1247} />
+                    </div>
+                    <div className="text-sm text-gray-400">Active Sentinels</div>
+                  </div>
+                  <div className="text-center lg:text-left">
+                    <div
+                      className="text-3xl sm:text-4xl font-black mb-1"
+                      style={{
+                        backgroundImage: 'linear-gradient(135deg, #14F195 0%, #9945FF 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text',
+                      }}
+                    >
+                      <AnimatedCounter end={45892} />
+                    </div>
+                    <div className="text-sm text-gray-400">Checks Run</div>
+                  </div>
+                  <div className="text-center lg:text-left">
+                    <div
+                      className="text-3xl sm:text-4xl font-black mb-1"
+                      style={{
+                        backgroundImage: 'linear-gradient(135deg, #9945FF 0%, #14F195 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text',
+                      }}
+                    >
+                      $0.0003
+                    </div>
+                    <div className="text-sm text-gray-400">Per Check</div>
+                  </div>
+                </motion.div>
               </motion.div>
 
-              {/* Scroll Indicator */}
+              {/* Right Content - 40% on desktop (2 columns) - 3D Hero */}
               <motion.div
-                variants={animations.fadeIn}
-                className="pt-16"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, delay: 0.3 }}
+                className="lg:col-span-2 h-[400px] sm:h-[500px] lg:h-[600px] relative"
               >
-                <motion.div
-                  animate={{ y: [0, 10, 0] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="text-gray-500 text-sm"
-                >
-                  <svg
-                    className="w-6 h-6 mx-auto"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-900/10 to-green-900/10 rounded-3xl" />
+                <Hero3D className="rounded-3xl" />
+                
+                {/* Shimmering particles overlay */}
+                <div className="absolute inset-0 pointer-events-none">
+                  {[...Array(20)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      className="absolute w-1 h-1 bg-white rounded-full"
+                      style={{
+                        left: `${Math.random() * 100}%`,
+                        top: `${Math.random() * 100}%`,
+                      }}
+                      animate={{
+                        opacity: [0, 1, 0],
+                        scale: [0, 1, 0],
+                      }}
+                      transition={{
+                        duration: 2 + Math.random() * 2,
+                        repeat: Infinity,
+                        delay: Math.random() * 2,
+                      }}
                     />
-                  </svg>
-                </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Scroll Indicator */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1 }}
+              className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
+            >
+              <motion.div
+                animate={{ y: [0, 10, 0] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="text-gray-500"
+              >
+                <ArrowRight className="w-6 h-6 rotate-90" />
               </motion.div>
             </motion.div>
           </div>
