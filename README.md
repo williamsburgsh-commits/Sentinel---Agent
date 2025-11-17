@@ -119,5 +119,5 @@ Built with technologies from:
 
 ## 📬 Contact
 
-Created by itswilly31 - [Twitter/X : itswilly3 )
+Created by itswilly31 - [Twitter/X : itswilly31 )
 Email: williamsburg.sh@gmail.com
