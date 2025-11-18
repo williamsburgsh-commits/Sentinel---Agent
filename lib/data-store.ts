@@ -119,10 +119,19 @@ function generateId(prefix: string): string {
 }
 
 /**
+ * Legacy sentinel type - represents old format with private_key field
+ * Used for migration from old format to new wallet metadata format
+ */
+type LegacySentinelData = Omit<Sentinel, 'wallet_provider' | 'legacy_private_key'> & {
+  private_key?: string;
+  wallet_provider?: never;
+};
+
+/**
  * Migrate a legacy sentinel to the new wallet metadata format
  * Tags old sentinels as 'legacy' and renames private_key to legacy_private_key
  */
-function migrateLegacySentinel(sentinel: any): Sentinel {
+function migrateLegacySentinel(sentinel: Sentinel | LegacySentinelData): Sentinel {
   // If already migrated, return as-is
   if (sentinel.wallet_provider) {
     return sentinel as Sentinel;
@@ -134,11 +143,11 @@ function migrateLegacySentinel(sentinel: any): Sentinel {
   const migrated: Sentinel = {
     ...sentinel,
     wallet_provider: 'legacy' as const,
-    legacy_private_key: sentinel.private_key, // Rename private_key to legacy_private_key
+    legacy_private_key: (sentinel as LegacySentinelData).private_key, // Rename private_key to legacy_private_key
   };
 
   // Remove old private_key field
-  delete (migrated as any).private_key;
+  delete (migrated as Record<string, unknown>).private_key;
 
   console.log(`✅ Migrated sentinel ${sentinel.id} as legacy wallet`);
   return migrated;
