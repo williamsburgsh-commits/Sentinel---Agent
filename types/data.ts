@@ -7,11 +7,24 @@
 
 export type SentinelStatus = 'unfunded' | 'ready' | 'monitoring' | 'paused';
 
+export type WalletProvider = 'legacy' | 'cdp';
+
 export interface Sentinel {
   id: string;
   user_id: string;
   wallet_address: string;
-  private_key: string; // base58 encoded for compatibility with runSentinelCheck
+  
+  // Wallet management metadata
+  wallet_provider: WalletProvider; // 'legacy' for locally-managed keypairs, 'cdp' for CDP-managed wallets
+  
+  // CDP wallet fields (only present when wallet_provider === 'cdp')
+  cdp_wallet_id?: string;
+  cdp_wallet_address?: string;
+  
+  // Legacy wallet field (only present when wallet_provider === 'legacy')
+  // DEPRECATED: Use getLegacyPrivateKey() helper instead of accessing directly
+  legacy_private_key?: string; // base58 encoded for compatibility with runSentinelCheck
+  
   threshold: number;
   condition: 'above' | 'below';
   payment_method: 'usdc' | 'cash';
@@ -26,7 +39,15 @@ export interface Sentinel {
 export interface SentinelInsert {
   user_id: string;
   wallet_address: string;
-  private_key: string;
+  wallet_provider: WalletProvider;
+  
+  // CDP wallet fields (required when wallet_provider === 'cdp')
+  cdp_wallet_id?: string;
+  cdp_wallet_address?: string;
+  
+  // Legacy wallet field (required when wallet_provider === 'legacy')
+  legacy_private_key?: string;
+  
   threshold: number;
   condition: 'above' | 'below';
   payment_method: 'usdc' | 'cash';
@@ -37,7 +58,10 @@ export interface SentinelInsert {
 
 export interface SentinelUpdate {
   wallet_address?: string;
-  private_key?: string;
+  wallet_provider?: WalletProvider;
+  cdp_wallet_id?: string;
+  cdp_wallet_address?: string;
+  legacy_private_key?: string;
   threshold?: number;
   condition?: 'above' | 'below';
   payment_method?: 'usdc' | 'cash';
@@ -51,7 +75,15 @@ export interface SentinelUpdate {
 // Sentinel configuration type for creating sentinels
 export interface SentinelConfig {
   wallet_address: string;
-  private_key: string;
+  wallet_provider: WalletProvider;
+  
+  // CDP wallet fields
+  cdp_wallet_id?: string;
+  cdp_wallet_address?: string;
+  
+  // Legacy wallet field
+  legacy_private_key?: string;
+  
   threshold: number;
   condition: 'above' | 'below';
   payment_method: 'usdc' | 'cash';

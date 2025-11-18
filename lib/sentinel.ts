@@ -5,6 +5,7 @@ import { getSOLPrice } from './switchboard';
 import { sendDiscordAlert } from './notifications';
 import { sendUSDCPayment, checkUSDCBalance, sendCASHPayment, getCASHBalance } from './payments';
 import { getOraclePublicKey } from './treasury';
+import { getLegacyPrivateKeyFromConfig, isLegacyWallet, isCDPWallet } from './sentinel-wallet-helpers';
 
 /**
  * Payment amount per price check (same for USDC and CASH)
@@ -33,9 +34,24 @@ export async function runSentinelCheck(config: SentinelConfig): Promise<Sentinel
   let settlementTimeMs: number | undefined;
 
   try {
+    // Check wallet provider type
+    if (isCDPWallet(config)) {
+      throw new Error('CDP-managed wallets are not yet supported in runSentinelCheck');
+    }
+
+    if (!isLegacyWallet(config)) {
+      throw new Error(`Unknown wallet provider: ${config.walletProvider}`);
+    }
+
     // Step 1: Reconstruct Sentinel's keypair from private key
     console.log('🔐 Loading Sentinel wallet...');
-    const sentinelKeypair = Keypair.fromSecretKey(bs58.decode(config.privateKey));
+    
+    const privateKey = getLegacyPrivateKeyFromConfig(config);
+    if (!privateKey) {
+      throw new Error('Missing private key for legacy sentinel wallet');
+    }
+    
+    const sentinelKeypair = Keypair.fromSecretKey(bs58.decode(privateKey));
     console.log('✅ Sentinel wallet loaded:', sentinelKeypair.publicKey.toBase58());
 
     // Determine payment method (default to USDC for backward compatibility)

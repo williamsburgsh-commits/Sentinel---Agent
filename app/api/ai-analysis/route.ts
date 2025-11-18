@@ -6,6 +6,7 @@ import { sendUSDCPayment } from '@/lib/payments';
 import { getOraclePublicKey } from '@/lib/treasury';
 import { Keypair } from '@solana/web3.js';
 import bs58 from 'bs58';
+import { getLegacyPrivateKey, isLegacyWallet, isCDPWallet } from '@/lib/sentinel-wallet-helpers';
 
 const ANALYSIS_COST = 0.04; // 0.04 USDC per analysis
 
@@ -69,9 +70,33 @@ export async function POST(request: Request) {
     console.log(`   Cost: ${ANALYSIS_COST} USDC`);
     console.log(`   Wallet: ${sentinel.wallet_address}`);
 
+    // Check wallet provider type
+    if (isCDPWallet(sentinel)) {
+      return NextResponse.json(
+        { success: false, error: 'CDP-managed wallets are not yet supported for AI analysis' },
+        { status: 400 }
+      );
+    }
+
+    if (!isLegacyWallet(sentinel)) {
+      return NextResponse.json(
+        { success: false, error: `Unknown wallet provider: ${sentinel.wallet_provider}` },
+        { status: 400 }
+      );
+    }
+
+    // Get legacy private key using helper (includes deprecation warning)
+    const privateKey = getLegacyPrivateKey(sentinel);
+    if (!privateKey) {
+      return NextResponse.json(
+        { success: false, error: 'Missing private key for legacy sentinel' },
+        { status: 400 }
+      );
+    }
+
     // Send payment to oracle
     const oracleAddress = getOraclePublicKey();
-    const sentinelKeypair = Keypair.fromSecretKey(bs58.decode(sentinel.private_key));
+    const sentinelKeypair = Keypair.fromSecretKey(bs58.decode(privateKey));
 
     let paymentSignature: string;
     try {
