@@ -118,10 +118,52 @@ function generateId(prefix: string): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
+/**
+ * Migrate a legacy sentinel to the new wallet metadata format
+ * Tags old sentinels as 'legacy' and renames private_key to legacy_private_key
+ */
+function migrateLegacySentinel(sentinel: any): Sentinel {
+  // If already migrated, return as-is
+  if (sentinel.wallet_provider) {
+    return sentinel as Sentinel;
+  }
+
+  console.log(`🔄 Migrating legacy sentinel ${sentinel.id} to new wallet format`);
+
+  // Migrate old format to new format
+  const migrated: Sentinel = {
+    ...sentinel,
+    wallet_provider: 'legacy' as const,
+    legacy_private_key: sentinel.private_key, // Rename private_key to legacy_private_key
+  };
+
+  // Remove old private_key field
+  delete (migrated as any).private_key;
+
+  console.log(`✅ Migrated sentinel ${sentinel.id} as legacy wallet`);
+  return migrated;
+}
+
 function getSentinelsFromStorage(): Sentinel[] {
   try {
     const stored = getItem(STORAGE_KEYS.SENTINELS);
-    return stored ? JSON.parse(stored) : [];
+    const rawSentinels = stored ? JSON.parse(stored) : [];
+    
+    // Migrate any legacy sentinels
+    const migratedSentinels = rawSentinels.map(migrateLegacySentinel);
+    
+    // Check if any migrations occurred
+    const hasMigrations = migratedSentinels.some((s, i) => 
+      !rawSentinels[i].wallet_provider
+    );
+    
+    // Save migrated data back to storage if any migrations occurred
+    if (hasMigrations && migratedSentinels.length > 0) {
+      console.log(`💾 Saving ${migratedSentinels.length} migrated sentinels to storage`);
+      saveSentinelsToStorage(migratedSentinels);
+    }
+    
+    return migratedSentinels;
   } catch (error) {
     console.error('Error reading sentinels:', error);
     return [];
@@ -192,7 +234,10 @@ export async function createSentinel(
       id: generateId('sentinel'),
       user_id: userId,
       wallet_address: config.wallet_address,
-      private_key: config.private_key,
+      wallet_provider: config.wallet_provider,
+      cdp_wallet_id: config.cdp_wallet_id,
+      cdp_wallet_address: config.cdp_wallet_address,
+      legacy_private_key: config.legacy_private_key,
       threshold: config.threshold,
       condition: config.condition,
       payment_method: config.payment_method,

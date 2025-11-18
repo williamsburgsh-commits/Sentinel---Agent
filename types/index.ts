@@ -1,11 +1,27 @@
 /**
+ * Wallet provider type for sentinels
+ */
+export type WalletProvider = 'legacy' | 'cdp';
+
+/**
  * Configuration for a Sentinel price monitor
  */
 export interface SentinelConfig {
   id: string;
   userId: string;
   walletAddress: string;
-  privateKey: string;
+  
+  // Wallet management metadata
+  walletProvider: WalletProvider;
+  
+  // CDP wallet fields (only present when walletProvider === 'cdp')
+  cdpWalletId?: string;
+  cdpWalletAddress?: string;
+  
+  // Legacy wallet field (only present when walletProvider === 'legacy')
+  // DEPRECATED: Use getLegacyPrivateKey() helper instead of accessing directly
+  legacyPrivateKey?: string;
+  
   threshold: number;
   condition: 'above' | 'below';
   discordWebhook: string;

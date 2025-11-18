@@ -154,7 +154,8 @@ export default function DashboardPage() {
       
       const sentinelConfig = {
         wallet_address: walletAddress,
-        private_key: privateKey,
+        wallet_provider: 'legacy' as const, // New field: mark as legacy wallet
+        legacy_private_key: privateKey, // Renamed from private_key
         discord_webhook: webhookUrl,
         threshold: parseFloat(priceThreshold),
         condition: condition as 'above' | 'below',
@@ -162,7 +163,7 @@ export default function DashboardPage() {
         network: currentNetwork,
       };
 
-      console.log('📝 Sentinel config:', { ...sentinelConfig, private_key: '[REDACTED]' });
+      console.log('📝 Sentinel config:', { ...sentinelConfig, legacy_private_key: '[REDACTED]' });
       
       const created = await createSentinel(user.id, sentinelConfig);
       console.log('✅ Sentinel created with ID:', created?.id);

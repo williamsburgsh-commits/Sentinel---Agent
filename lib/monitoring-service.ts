@@ -12,6 +12,7 @@ import { showErrorToast, showSuccessToast } from './toast';
 import { Keypair } from '@solana/web3.js';
 import bs58 from 'bs58';
 import { checkPriceWith402 } from './x402-client';
+import { getLegacyPrivateKey, isLegacyWallet, isCDPWallet } from './sentinel-wallet-helpers';
 
 // Store active monitoring intervals
 const monitoringIntervals = new Map<string, NodeJS.Timeout>();
@@ -89,8 +90,26 @@ async function runCheck(sentinel: Sentinel): Promise<void> {
   try {
     console.log(`🔍 Running HTTP 402 check for sentinel ${sentinel.id}`);
 
+    // Check wallet provider type
+    if (isCDPWallet(sentinel)) {
+      console.error(`❌ CDP wallets not yet supported in monitoring service`);
+      throw new Error('CDP-managed wallets are not yet supported for automated monitoring');
+    }
+
+    if (!isLegacyWallet(sentinel)) {
+      console.error(`❌ Unknown wallet provider: ${sentinel.wallet_provider}`);
+      throw new Error(`Unknown wallet provider: ${sentinel.wallet_provider}`);
+    }
+
+    // Get legacy private key using helper (includes deprecation warning)
+    const privateKey = getLegacyPrivateKey(sentinel);
+    if (!privateKey) {
+      console.error(`❌ Failed to get private key for legacy sentinel ${sentinel.id}`);
+      throw new Error('Missing private key for legacy sentinel');
+    }
+
     // Reconstruct sentinel keypair for payment
-    const sentinelKeypair = Keypair.fromSecretKey(bs58.decode(sentinel.private_key));
+    const sentinelKeypair = Keypair.fromSecretKey(bs58.decode(privateKey));
     console.log('🔐 Sentinel wallet:', sentinelKeypair.publicKey.toBase58());
 
     // Prepare sentinel configuration
@@ -98,13 +117,15 @@ async function runCheck(sentinel: Sentinel): Promise<void> {
       id: sentinel.id,
       userId: sentinel.user_id,
       walletAddress: sentinel.wallet_address,
-      privateKey: sentinel.private_key,
+      walletProvider: 'legacy' as const,
+      legacyPrivateKey: privateKey,
       threshold: sentinel.threshold,
       condition: sentinel.condition,
       discordWebhook: sentinel.discord_webhook,
       isActive: true,
       paymentMethod: sentinel.payment_method,
       network: sentinel.network,
+      createdAt: new Date(sentinel.created_at),
     };
 
     // Use HTTP 402 client to handle payment flow
