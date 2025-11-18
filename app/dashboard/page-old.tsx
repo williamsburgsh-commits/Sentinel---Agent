@@ -304,9 +304,12 @@ export default function DashboardPage() {
 
     console.log('🔄 Setting up monitoring for active sentinels...');
 
+    // Capture the ref value to use in cleanup
+    const intervalsToCleanup = monitoringIntervalsRef.current;
+
     // Clear existing intervals
-    monitoringIntervalsRef.current.forEach(interval => clearInterval(interval));
-    monitoringIntervalsRef.current.clear();
+    intervalsToCleanup.forEach(interval => clearInterval(interval));
+    intervalsToCleanup.clear();
 
     // Create interval for each active sentinel
     const activeSentinels = sentinels.filter(s => s.is_active);
@@ -425,17 +428,17 @@ export default function DashboardPage() {
       
       // Then run every 30 seconds
       const interval = setInterval(runCheck, 30000);
-      monitoringIntervalsRef.current.set(sentinel.id, interval);
+      intervalsToCleanup.set(sentinel.id, interval);
     });
 
     // Cleanup on unmount or when sentinels change
     return () => {
       console.log('🛑 Cleaning up monitoring intervals');
-      monitoringIntervalsRef.current.forEach((interval, sentinelId) => {
+      intervalsToCleanup.forEach((interval, sentinelId) => {
         console.log(`  Stopping monitoring for sentinel ${sentinelId}`);
         clearInterval(interval);
       });
-      monitoringIntervalsRef.current.clear();
+      intervalsToCleanup.clear();
     };
   }, [sentinels, user, loadSentinels, loadGlobalActivities]);
 
