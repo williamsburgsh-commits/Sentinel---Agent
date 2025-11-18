@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
+import { OnchainKitProvider } from "@/components/OnchainKitProvider";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -29,18 +30,20 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
-        <Toaster 
-          position="top-right"
-          toastOptions={{
-            className: '',
-            style: {
-              background: '#1f2937',
-              color: '#f3f4f6',
-              border: '1px solid #374151',
-            },
-          }}
-        />
+        <OnchainKitProvider>
+          {children}
+          <Toaster 
+            position="top-right"
+            toastOptions={{
+              className: '',
+              style: {
+                background: '#1f2937',
+                color: '#f3f4f6',
+                border: '1px solid #374151',
+              },
+            }}
+          />
+        </OnchainKitProvider>
       </body>
     </html>
   );

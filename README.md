@@ -62,11 +62,14 @@ npm run dev
 ```
 
 **Required Environment Variables:**
--  COINMARKETCAP_API_KEY` - Get from https://pro.coinmarketcap.com
+- `COINMARKETCAP_API_KEY` - Get from https://pro.coinmarketcap.com
 - `NEXT_PUBLIC_MAINNET_RPC` - Get Helius key from https://helius.dev
-- `DEEPSEEK_API_KEY` - Get from https://platform.deepseek.com
 - `NEXT_PUBLIC_PAYMENT_RECIPIENT_WALLET` - Your Solana wallet address
 
+**Optional Environment Variables:**
+- `DEEPSEEK_API_KEY` - Get from https://platform.deepseek.com (for AI analysis)
+- `CDP_API_KEY`, `CDP_API_SECRET`, `CDP_PROJECT_ID` - Get from https://portal.cdp.coinbase.com/ (for embedded wallets)
+- `NEXT_PUBLIC_CDP_API_KEY` - Public CDP key for OnchainKit UI components
 
 See [SETUP.md](./SETUP.md) for detailed configuration.
 
